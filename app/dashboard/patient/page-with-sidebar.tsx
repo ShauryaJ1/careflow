@@ -254,7 +254,7 @@ export default function EnhancedPatientDashboard() {
     onSuccess: () => {
       toast.success("Profile updated successfully!");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast.error(`Error updating profile: ${error.message}`);
     }
   });

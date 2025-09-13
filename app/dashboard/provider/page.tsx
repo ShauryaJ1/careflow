@@ -97,7 +97,7 @@ export default function ProviderDashboard() {
     onSuccess: () => {
       alert("Profile updated successfully!");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       alert(`Error updating profile: ${error.message}`);
     }
   });
@@ -705,7 +705,7 @@ export default function ProviderDashboard() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Analytics & Insights</CardTitle>
-                    <CardDescription>View your facility's performance and patient demand</CardDescription>
+                    <CardDescription>View your facility&apos;s performance and patient demand</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="grid md:grid-cols-3 gap-4 mb-6">

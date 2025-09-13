@@ -32,7 +32,7 @@ export default function LoginPage() {
             Welcome to CareFlow
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Choose how you'd like to continue
+              Choose how you&apos;d like to continue
           </p>
         </motion.div>
 
@@ -48,7 +48,7 @@ export default function LoginPage() {
                   <div className="mx-auto mb-4 p-4 bg-blue-100 dark:bg-blue-900 rounded-full w-20 h-20 flex items-center justify-center group-hover:scale-110 transition-transform">
                     <UserIcon className="h-10 w-10 text-blue-600 dark:text-blue-400" />
                   </div>
-                  <CardTitle className="text-2xl">I'm a Patient</CardTitle>
+                  <CardTitle className="text-2xl">I&apos;m a Patient</CardTitle>
                   <CardDescription className="text-base">
                     Find healthcare services near you
                   </CardDescription>
@@ -88,7 +88,7 @@ export default function LoginPage() {
                   <div className="mx-auto mb-4 p-4 bg-green-100 dark:bg-green-900 rounded-full w-20 h-20 flex items-center justify-center group-hover:scale-110 transition-transform">
                     <BuildingIcon className="h-10 w-10 text-green-600 dark:text-green-400" />
                   </div>
-                  <CardTitle className="text-2xl">I'm a Provider</CardTitle>
+                  <CardTitle className="text-2xl">I&apos;m a Provider</CardTitle>
                   <CardDescription className="text-base">
                     Manage your healthcare services
                   </CardDescription>
@@ -125,7 +125,7 @@ export default function LoginPage() {
           className="text-center mt-8"
         >
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link href="/auth/sign-up" className="text-blue-600 hover:underline font-medium">
               Sign up here
             </Link>

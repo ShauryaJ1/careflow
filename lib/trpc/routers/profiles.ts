@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { router, protectedProcedure } from "../init";
+import { createTRPCRouter, protectedProcedure } from "../init";
 import { TRPCError } from "@trpc/server";
 
 // Input schemas for profile updates
@@ -52,10 +52,10 @@ const providerProfileUpdateSchema = z.object({
   accessibility_features: z.array(z.string()).nullable().optional(),
 });
 
-export const profilesRouter = router({
+export const profilesRouter = createTRPCRouter({
   // Get current user's profile
   getProfile: protectedProcedure.query(async ({ ctx }) => {
-    const userId = ctx.user.sub;
+    const userId = ctx.user.id;
     
     // Get profile data
     const { data: profile, error } = await ctx.supabase
@@ -92,7 +92,7 @@ export const profilesRouter = router({
   updatePatientProfile: protectedProcedure
     .input(patientProfileUpdateSchema)
     .mutation(async ({ ctx, input }) => {
-      const userId = ctx.user.sub;
+      const userId = ctx.user.id;
 
       // First verify user is a patient
       const { data: profile, error: profileError } = await ctx.supabase
@@ -133,7 +133,7 @@ export const profilesRouter = router({
   updateProviderProfile: protectedProcedure
     .input(providerProfileUpdateSchema)
     .mutation(async ({ ctx, input }) => {
-      const userId = ctx.user.sub;
+      const userId = ctx.user.id;
 
       // First verify user is a provider and get provider_id
       const { data: profile, error: profileError } = await ctx.supabase
@@ -191,7 +191,7 @@ export const profilesRouter = router({
             geo_lat: profileFields.geo_lat,
             geo_long: profileFields.geo_long,
             phone: profileFields.phone,
-            email: ctx.user.email,
+            email: ctx.user.email!,
             services: services || [],
             languages_spoken: languages_spoken || [],
             telehealth_available: telehealth_available || false,
@@ -260,7 +260,7 @@ export const profilesRouter = router({
 
   // Get user role
   getUserRole: protectedProcedure.query(async ({ ctx }) => {
-    const userId = ctx.user.sub;
+    const userId = ctx.user.id;
     
     const { data, error } = await ctx.supabase
       .from("profiles")

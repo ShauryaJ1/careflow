@@ -71,7 +71,7 @@ export default function PatientDashboard() {
     onSuccess: () => {
       alert("Profile updated successfully!");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       alert(`Error updating profile: ${error.message}`);
     }
   });
