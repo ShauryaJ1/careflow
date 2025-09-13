@@ -51,7 +51,7 @@ Create `.env.local`:
 ```env
 # Supabase (Required)
 NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY=your-anon-key
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
 # Optional for future features
 SUPABASE_SERVICE_ROLE_KEY=your-service-key

@@ -77,12 +77,12 @@ alwaysApply: true
 
 ## Cross-Cutting
 
-* **Auth & Roles**: Supabase Auth (patients/providers/admin); row-level security
+* **Auth & Roles**: Supabase Auth (patients/providers/admin); on /login, if you are not logged in you get pushed onto /login
 * **Data Pipeline**: **Vercel Cron** (API route trigger) or **Supabase pg_cron** (DB-native) → Scraper jobs → Supabase ingestion → dedup/normalize
 * **Knowledge/Search**: Stagehand + Google Search bootstrap; Exa/Perplexity enrichment (kept separate from DB)
 * **APIs/Serverless**: Next.js Route Handlers on Vercel; Edge Middleware for geo/rate control
 * **Realtime**: Supabase Realtime for dashboards & live map updates
 * **Offline/PWA**: Service worker + Supabase delta syncs
 * **Observability**: Vercel analytics, Supabase logs, decision traces
-* **UI Polish**: ShadCN UI + Tailwind + Framer Motion for clean hackathon-ready look. Feel free to add more Shadcn components, even ones we don’t have in our current project
+* **UI Polish**: ShadCN UI + Tailwind + Framer Motion for clean hackathon-ready look. Feel free to add more Shadcn components, even ones we don’t have in our current project. Every time you make a new page or component, see if there is a ShadCN component you want to add to the project
 * **tRPC**: use tRPC for all API-related things. Wrap API calls, cron-triggered scrapers, and DB mutations in tRPC endpoints
