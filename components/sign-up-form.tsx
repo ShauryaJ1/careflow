@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { validateEmail, validatePassword, sanitizeEmail } from "@/lib/utils/validation";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import {
   Card,
   CardContent,
@@ -93,18 +94,31 @@ export function SignUpForm({
       
       // Auto-login after signup (naive auth - no email verification)
       if (data?.user) {
-        // Try to sign in immediately after signup
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email: sanitizedEmail,
-          password,
-        });
-        
-        if (signInError) {
-          throw new Error("Account created but failed to sign in. Please try logging in manually.");
+        // Check if we already have a session (auto-confirmed)
+        if (data.session) {
+          // Already logged in with session
+          router.push(`/dashboard/${role}`);
+        } else {
+          // Add a small delay to ensure the user is fully created and confirmed
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Try to sign in after the delay
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email: sanitizedEmail,
+            password,
+          });
+          
+          if (signInError) {
+            console.error("Failed to auto-login after signup:", signInError);
+            // Don't throw error - just redirect to login page
+            // The account was created successfully, they just need to login manually
+            toast.success("Account created successfully! Please log in.");
+            router.push(`/login/${role}`);
+          } else {
+            // Successfully logged in
+            router.push(`/dashboard/${role}`);
+          }
         }
-        
-        // Redirect to appropriate dashboard
-        router.push(`/dashboard/${role}`);
       } else {
         throw new Error("An unexpected error occurred during sign-up.");
       }

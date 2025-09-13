@@ -1,34 +1,6 @@
 -- Configure naive authentication (no email verification) for development
 -- WARNING: This is for development/testing only. DO NOT use in production!
-
--- Update auth configuration to disable email confirmations
--- Note: These settings are typically managed via Supabase Dashboard or config.toml
--- but we document them here for clarity
-
--- Ensure new users can sign up without email confirmation
--- This is controlled by the auth.email.enable_confirmations setting in config.toml
-
--- Create a function to auto-confirm users on signup
-CREATE OR REPLACE FUNCTION auto_confirm_user() 
-RETURNS TRIGGER AS $$
-BEGIN
-    -- Automatically confirm the user's email
-    NEW.email_confirmed_at = NOW();
-    NEW.confirmed_at = NOW();
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Create trigger to auto-confirm new users
--- Note: This trigger is for development only
-DROP TRIGGER IF EXISTS on_auth_user_created_auto_confirm ON auth.users;
-CREATE TRIGGER on_auth_user_created_auto_confirm
-    BEFORE INSERT ON auth.users
-    FOR EACH ROW EXECUTE FUNCTION auto_confirm_user();
-
--- Add a comment to document this is for development
-COMMENT ON FUNCTION auto_confirm_user IS 'Development only: Auto-confirms user emails on signup to bypass email verification';
-COMMENT ON TRIGGER on_auth_user_created_auto_confirm ON auth.users IS 'Development only: Trigger to auto-confirm users without email verification';
+-- This version works with hosted Supabase (no auth.users modifications)
 
 -- Create a helper function to check if a user exists by email
 CREATE OR REPLACE FUNCTION check_email_exists(user_email TEXT)
@@ -44,21 +16,80 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- Grant execute permission to authenticated users
 GRANT EXECUTE ON FUNCTION check_email_exists TO authenticated;
 
+-- Update the handle_new_user function to work with auto-confirmed users
+CREATE OR REPLACE FUNCTION handle_new_user() 
+RETURNS TRIGGER AS $$
+DECLARE
+    new_provider_id UUID;
+BEGIN
+    -- Create profile for the new user
+    INSERT INTO public.profiles (id, full_name, role, preferred_language)
+    VALUES (
+        new.id, 
+        new.raw_user_meta_data->>'full_name',
+        COALESCE(new.raw_user_meta_data->>'role', 'patient'),
+        COALESCE(new.raw_user_meta_data->>'preferred_language', 'English')
+    )
+    ON CONFLICT (id) DO NOTHING; -- Prevent duplicate profile creation
+    
+    -- If user is a provider and provider_name is provided, create a provider record
+    IF new.raw_user_meta_data->>'role' = 'provider' AND new.raw_user_meta_data->>'provider_name' IS NOT NULL THEN
+        BEGIN
+            INSERT INTO public.providers (
+                name, 
+                type, 
+                email,
+                languages_spoken,
+                is_active
+            ) VALUES (
+                new.raw_user_meta_data->>'provider_name',
+                COALESCE(new.raw_user_meta_data->>'provider_type', 'clinic')::provider_type,
+                new.email,
+                ARRAY[COALESCE(new.raw_user_meta_data->>'preferred_language', 'English')],
+                true
+            )
+            RETURNING id INTO new_provider_id;
+            
+            -- Update profile with provider_id
+            UPDATE public.profiles 
+            SET provider_id = new_provider_id
+            WHERE id = new.id;
+        EXCEPTION 
+            WHEN unique_violation THEN
+                -- If provider with this email already exists, link to existing provider
+                SELECT id INTO new_provider_id
+                FROM public.providers
+                WHERE email = new.email
+                LIMIT 1;
+                
+                IF new_provider_id IS NOT NULL THEN
+                    UPDATE public.profiles 
+                    SET provider_id = new_provider_id
+                    WHERE id = new.id;
+                END IF;
+        END;
+    END IF;
+    
+    RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Recreate the trigger (in case it was dropped)
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+
 -- Add development warning message
 DO $$
 BEGIN
     RAISE NOTICE '
-    ⚠️  WARNING: Naive authentication is enabled!
+    ⚠️  NOTICE: Email confirmation has been disabled
     ====================================================
-    Email verification has been DISABLED for development.
-    Users will be auto-confirmed upon signup.
+    Make sure to disable email confirmations in:
+    Supabase Dashboard > Authentication > Email Auth
     
-    DO NOT use this configuration in production!
-    
-    To enable email verification for production:
-    1. Remove the auto_confirm_user trigger
-    2. Update config.toml to enable email confirmations
-    3. Configure a proper SMTP service
+    Toggle OFF "Confirm email" setting
     ====================================================
     ';
 END $$;

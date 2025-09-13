@@ -91,17 +91,6 @@ enable_signup = true
 enable_confirmations = false
 # Disable double confirmation for email changes
 double_confirm_changes = false
-# Allow users to change their email
-enable_change_email = true
-# Template for signup emails (not used when confirmations are disabled)
-template.subject = "Welcome to CareFlow"
-template.content_path = "./supabase/templates/confirmation.html"
-# Template for email change (not used when double_confirm_changes is false)
-template.change_email.subject = "CareFlow Email Change Confirmation"
-template.change_email.content_path = "./supabase/templates/email_change.html"
-
-# Disable secure email change for development
-secure_email_change_enabled = false
 
 # Use a custom SMTP server for sending emails (optional for development)
 [auth.email.smtp]
@@ -117,7 +106,6 @@ sender_name = "CareFlow"
 enable_signup = false
 enable_confirmations = false
 template = "Your CareFlow code is {{ .Code }}"
-test_otp = "123456"
 
 # External OAuth providers (disabled for naive auth)
 [auth.external.google]
