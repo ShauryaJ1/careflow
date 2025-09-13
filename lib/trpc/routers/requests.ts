@@ -36,24 +36,7 @@ export const requestsRouter = createTRPCRouter({
         });
       }
 
-      // Trigger auto-matching in the background
-      // This would be handled by a Trigger.dev job in production
-      ctx.supabase
-        .rpc('match_request_with_providers', { request_id: data.id })
-        .then(({ data: matches }) => {
-          if (matches && matches.length > 0) {
-            const bestMatch = matches[0];
-            ctx.supabase
-              .from('patient_requests')
-              .update({
-                status: 'matched',
-                matched_provider_id: bestMatch.provider_id,
-                match_score: bestMatch.score
-              })
-              .eq('id', data.id);
-          }
-        })
-        .catch(console.error);
+      // TODO: Add auto-matching when scraper pipeline is ready
 
       return data;
     }),
@@ -303,7 +286,15 @@ export const requestsRouter = createTRPCRouter({
       }
 
       // Calculate match scores based on algorithm
-      const matches = providers.map((provider: any) => {
+      interface MatchScore {
+        providerId: string;
+        providerName: string;
+        distance: number;
+        waitTime: number | null;
+        score: number;
+      }
+      
+      const matches: MatchScore[] = providers.map((provider: any) => {
         let score = 1.0;
         
         if (input.algorithm === 'distance' || input.algorithm === 'smart') {
