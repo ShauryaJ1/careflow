@@ -207,7 +207,12 @@ export async function matchRequestWithProviders(
   }
 
   // Calculate match scores based on various factors
-  const matches = providers.map((provider: any) => {
+  interface MatchResult {
+    providerId: string;
+    score: number;
+  }
+  
+  const matches: MatchResult[] = providers.map((provider: any) => {
     let score = 1.0;
     
     // Distance factor (closer is better)
@@ -232,7 +237,7 @@ export async function matchRequestWithProviders(
   });
 
   // Sort by score (highest first)
-  matches.sort((a, b) => b.score - a.score);
+  matches.sort((a: MatchResult, b: MatchResult) => b.score - a.score);
 
   return matches;
 }
@@ -352,7 +357,17 @@ export async function getRequestStatistics(
     };
   }
 
-  const stats = {
+  const stats: {
+    total: number;
+    pending: number;
+    matched: number;
+    fulfilled: number;
+    cancelled: number;
+    byService: Record<ServiceType, number>;
+    totalMatchScore: number;
+    matchCount: number;
+    [key: string]: any;
+  } = {
     total: data.length,
     pending: 0,
     matched: 0,
@@ -363,15 +378,16 @@ export async function getRequestStatistics(
     matchCount: 0
   };
 
-  data.forEach((request) => {
+  data.forEach((request: any) => {
     // Count by status
-    stats[request.status]++;
+    stats[request.status as keyof typeof stats]++;
     
     // Count by service
-    if (!stats.byService[request.requested_service]) {
-      stats.byService[request.requested_service] = 0;
+    const service = request.requested_service as ServiceType;
+    if (!stats.byService[service]) {
+      stats.byService[service] = 0;
     }
-    stats.byService[request.requested_service]++;
+    stats.byService[service]++;
     
     // Calculate average match score
     if (request.match_score !== null) {

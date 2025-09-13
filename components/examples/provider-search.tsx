@@ -22,14 +22,13 @@ export function ProviderSearch() {
     enabled: false, // Don't run automatically
   });
 
-  // Use tRPC mutation for finding nearby providers
-  const findNearby = trpc.providers.findNearby.useMutation({
-    onSuccess: (data) => {
-      console.log('Found nearby providers:', data);
-    },
-    onError: (error) => {
-      console.error('Error finding nearby providers:', error);
-    },
+  // Use tRPC query for finding nearby providers
+  const { data: nearbyProviders, refetch: findNearby, isLoading: isFindingNearby } = trpc.providers.findNearby.useQuery({
+    lat: searchParams.lat,
+    lng: searchParams.lng,
+    maxDistanceMiles: searchParams.radius,
+  }, {
+    enabled: false, // Don't run automatically
   });
 
   const handleSearch = () => {
@@ -37,11 +36,7 @@ export function ProviderSearch() {
   };
 
   const handleFindNearby = () => {
-    findNearby.mutate({
-      lat: searchParams.lat,
-      lng: searchParams.lng,
-      maxDistanceMiles: searchParams.radius,
-    });
+    findNearby();
   };
 
   return (
@@ -90,8 +85,8 @@ export function ProviderSearch() {
             <Button onClick={handleSearch} disabled={isLoading}>
               {isLoading ? 'Searching...' : 'Search Providers'}
             </Button>
-            <Button onClick={handleFindNearby} variant="outline" disabled={findNearby.isPending}>
-              {findNearby.isPending ? 'Finding...' : 'Find Nearby (PostGIS)'}
+            <Button onClick={handleFindNearby} variant="outline" disabled={isFindingNearby}>
+              {isFindingNearby ? 'Finding...' : 'Find Nearby (PostGIS)'}
             </Button>
           </div>
         </CardContent>
@@ -113,7 +108,7 @@ export function ProviderSearch() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {providers.map((provider: any) => (
+              {providers.map((provider) => (
                 <div key={provider.id} className="border rounded-lg p-4">
                   <div className="flex justify-between items-start">
                     <div>
@@ -149,7 +144,7 @@ export function ProviderSearch() {
         </Card>
       )}
 
-      {findNearby.data && findNearby.data.length > 0 && (
+      {nearbyProviders && nearbyProviders.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Nearby Providers (PostGIS)</CardTitle>
@@ -157,7 +152,7 @@ export function ProviderSearch() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {findNearby.data.map((provider) => (
+              {nearbyProviders.map((provider: any) => (
                 <div key={provider.provider_id} className="border rounded-lg p-4">
                   <h3 className="font-semibold">{provider.provider_name}</h3>
                   <p className="text-sm text-gray-600">{provider.address}</p>

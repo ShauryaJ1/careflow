@@ -2,8 +2,7 @@ import { z } from 'zod';
 import { createTRPCRouter, publicProcedure, protectedProcedure, adminProcedure } from '../init';
 import {
   createPatientRequestSchema,
-  updateRequestStatusSchema,
-  requestStatusSchema
+  updateRequestStatusSchema
 } from '../validation';
 import { TRPCError } from '@trpc/server';
 

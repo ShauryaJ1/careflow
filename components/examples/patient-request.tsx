@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import type { ServiceType, TimeSlot } from '@/lib/types/database';
+import type { ServiceType } from '@/lib/types/database';
 
 export function PatientRequest() {
   const [requestData, setRequestData] = useState({

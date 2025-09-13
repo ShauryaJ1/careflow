@@ -3,7 +3,6 @@ import { type FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch';
 import superjson from 'superjson';
 import { ZodError } from 'zod';
 import { createClient } from '@/lib/supabase/server';
-import { cookies } from 'next/headers';
 
 /**
  * Context creation for tRPC
