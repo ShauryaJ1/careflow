@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { testXaiApiKey } from "@/lib/ai/test-xai";
+import { serverTestXaiApiKey } from "@/lib/ai/server-test-xai";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -224,6 +226,12 @@ export default function PatientDashboard() {
               </p>
             </div>
             <div className="flex gap-3">
+              <Button onClick={async () => {
+                const result = await serverTestXaiApiKey();
+                console.log('Server test result:', result);
+              }} variant="secondary">
+                Test API
+              </Button>
               <Button onClick={handleSave} disabled={isSaving}>
                 <SaveIcon className="mr-2 h-4 w-4" />
                 {isSaving ? "Saving..." : "Save Changes"}

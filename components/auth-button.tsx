@@ -18,12 +18,20 @@ export async function AuthButton() {
     </div>
   ) : (
     <div className="flex gap-2">
-      <Button asChild size="sm" variant={"outline"}>
-        <Link href="/auth/login">Sign in</Link>
-      </Button>
-      <Button asChild size="sm" variant={"default"}>
-        <Link href="/auth/sign-up">Sign up</Link>
-      </Button>
+      <a
+        href="/login"
+        className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-8 px-3 border bg-white dark:bg-gray-800 text-black dark:text-white shadow-xs hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer z-50 relative"
+        style={{ pointerEvents: 'auto' }}
+      >
+        Sign in
+      </a>
+      <a
+        href="/login"
+        className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-8 px-3 bg-blue-600 text-white shadow-xs hover:bg-blue-700 cursor-pointer z-50 relative"
+        style={{ pointerEvents: 'auto' }}
+      >
+        Sign up
+      </a>
     </div>
   );
 }
