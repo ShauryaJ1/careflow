@@ -1,6 +1,7 @@
 import { createTRPCRouter } from '../init';
 import { providersRouter } from './providers';
 import { requestsRouter } from './requests';
+import { profilesRouter } from './profiles';
 
 /**
  * Main application router
@@ -9,6 +10,7 @@ import { requestsRouter } from './requests';
 export const appRouter = createTRPCRouter({
   providers: providersRouter,
   requests: requestsRouter,
+  profiles: profilesRouter,
 });
 
 // Export type for client
