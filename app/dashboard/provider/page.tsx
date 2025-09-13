@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import {
   BuildingIcon,
   MapPinIcon,
@@ -37,7 +38,6 @@ interface ProviderProfile {
   email: string;
   full_name: string | null;
   phone: string | null;
-  provider_id: string | null;
   address: string | null;
   geo_lat: number | null;
   geo_long: number | null;
@@ -47,6 +47,7 @@ interface ProviderProfile {
     sms: boolean;
     push: boolean;
   } | null;
+  // Facility fields are now directly in provider_profiles
   provider_name?: string;
   provider_type?: ProviderType;
   services?: ServiceType[];
@@ -58,6 +59,9 @@ interface ProviderProfile {
   capacity?: number;
   hours?: any;
   accessibility_features?: string[];
+  specialty?: string;
+  license_number?: string;
+  years_of_experience?: number;
 }
 
 const SERVICE_OPTIONS: { value: ServiceType; label: string }[] = [
@@ -94,11 +98,14 @@ export default function ProviderDashboard() {
   const supabase = createClient();
   
   const updateProfile = trpc.profiles.updateProviderProfile.useMutation({
-    onSuccess: () => {
-      alert("Profile updated successfully!");
+    onSuccess: async () => {
+      toast.success("Profile updated successfully!");
+      // Reload profile to ensure we have the latest data
+      await loadProfile();
     },
     onError: (error: any) => {
-      alert(`Error updating profile: ${error.message}`);
+      toast.error(`Error updating profile: ${error.message}`);
+      console.error("Update error details:", error);
     }
   });
 
@@ -116,45 +123,42 @@ export default function ProviderDashboard() {
       }
 
       const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
+        .from("provider_profiles")
         .select("*")
         .eq("id", user.id)
         .single();
 
-      if (profileError) throw profileError;
-
-      // Check if user is a provider
-      if (profileData.role !== "provider") {
-        router.push("/dashboard/patient");
-        return;
-      }
-
-      // If provider_id exists, fetch provider details
-      let providerData = null;
-      if (profileData.provider_id) {
-        const { data, error } = await supabase
-          .from("providers")
-          .select("*")
-          .eq("id", profileData.provider_id)
+      if (profileError) {
+        // User might be a patient, redirect them
+        const { data: patientProfile } = await supabase
+          .from("patient_profiles")
+          .select("id")
+          .eq("id", user.id)
           .single();
         
-        if (!error) providerData = data;
+        if (patientProfile) {
+          router.push("/dashboard/patient");
+          return;
+        }
+        throw profileError;
       }
 
+      // All provider data is now in provider_profiles table
       setProfile({
         ...profileData,
         email: user.email || "",
-        provider_name: providerData?.name,
-        provider_type: providerData?.type,
-        services: providerData?.services || [],
-        languages_spoken: providerData?.languages_spoken || [],
-        telehealth_available: providerData?.telehealth_available,
-        accepts_walk_ins: providerData?.accepts_walk_ins,
-        website: providerData?.website,
-        insurance_accepted: providerData?.insurance_accepted || [],
-        capacity: providerData?.capacity,
-        hours: providerData?.hours,
-        accessibility_features: providerData?.accessibility_features || [],
+        // These fields are now directly in provider_profiles
+        provider_name: profileData.provider_name,
+        provider_type: profileData.provider_type,
+        services: profileData.services || [],
+        languages_spoken: profileData.languages_spoken || [],
+        telehealth_available: profileData.telehealth_available,
+        accepts_walk_ins: profileData.accepts_walk_ins,
+        website: profileData.website,
+        insurance_accepted: profileData.insurance_accepted || [],
+        capacity: profileData.capacity,
+        hours: profileData.hours,
+        accessibility_features: profileData.accessibility_features || [],
       });
     } catch (error) {
       console.error("Error loading profile:", error);
@@ -168,7 +172,7 @@ export default function ProviderDashboard() {
     
     setIsSaving(true);
     try {
-      await updateProfile.mutateAsync({
+      const updateData = {
         full_name: profile.full_name,
         phone: profile.phone,
         address: profile.address,
@@ -186,7 +190,15 @@ export default function ProviderDashboard() {
         insurance_accepted: profile.insurance_accepted,
         capacity: profile.capacity,
         accessibility_features: profile.accessibility_features,
+      };
+      
+      console.log("Sending update data:", {
+        services: updateData.services,
+        telehealth_available: updateData.telehealth_available,
+        accepts_walk_ins: updateData.accepts_walk_ins
       });
+      
+      await updateProfile.mutateAsync(updateData);
     } finally {
       setIsSaving(false);
     }

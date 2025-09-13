@@ -2,7 +2,9 @@
 
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import { validateEmail, validatePassword, sanitizeEmail } from "@/lib/utils/validation";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import {
   Card,
   CardContent,
@@ -30,6 +32,7 @@ export function SignUpForm({
   const [repeatPassword, setRepeatPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [providerName, setProviderName] = useState("");
+  const [providerEmail, setProviderEmail] = useState(""); // Optional provider facility email
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -39,6 +42,22 @@ export function SignUpForm({
     const supabase = createClient();
     setIsLoading(true);
     setError(null);
+
+    // Validate email
+    const sanitizedEmail = sanitizeEmail(email);
+    if (!validateEmail(sanitizedEmail)) {
+      setError("Please enter a valid email address");
+      setIsLoading(false);
+      return;
+    }
+
+    // Validate password strength
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      setError(passwordValidation.errors.join(". "));
+      setIsLoading(false);
+      return;
+    }
 
     if (password !== repeatPassword) {
       setError("Passwords do not match");
@@ -55,18 +74,67 @@ export function SignUpForm({
       if (role === "provider" && providerName) {
         metadata.provider_name = providerName;
         metadata.provider_type = "clinic";
+        // Provider email is optional - if not provided, the provider record won't have an email
+        if (providerEmail) {
+          metadata.provider_email = providerEmail;
+        }
       }
       
-      const { error } = await supabase.auth.signUp({
-        email,
+      const { data, error } = await supabase.auth.signUp({
+        email: sanitizedEmail,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/dashboard/${role}`,
           data: metadata,
         },
       });
-      if (error) throw error;
-      router.push("/auth/sign-up-success");
+      
+      if (error) {
+        // Check for specific error types
+        if (error.message.includes("already registered") || error.message.includes("already exists")) {
+          throw new Error(`This email is already registered. Please login instead or use a different email.`);
+        }
+        throw error;
+      }
+      
+      // Check if signup was successful
+      if (data?.user) {
+        // With email confirmation disabled in Supabase Dashboard,
+        // users should get a session immediately
+        if (data.session) {
+          // User is already logged in with session
+          toast.success("Account created successfully!");
+          router.push(`/dashboard/${role}`);
+        } else {
+          // No session means email confirmation might still be enabled
+          // or there's a configuration issue
+          console.log("User created but no session. Email confirmation may be enabled.");
+          
+          // Try to sign in manually with a longer delay
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email: sanitizedEmail,
+            password,
+          });
+          
+          if (signInError) {
+            console.error("Auto-login failed:", signInError);
+            // Account was created, just needs manual login
+            toast.success("Account created! Please log in to continue.");
+            router.push(`/login/${role}`);
+          } else if (signInData.session) {
+            toast.success("Welcome to CareFlow!");
+            router.push(`/dashboard/${role}`);
+          } else {
+            // Fallback to manual login
+            toast.info("Please check your email to confirm your account, or try logging in.");
+            router.push(`/login/${role}`);
+          }
+        }
+      } else {
+        throw new Error("Failed to create account. Please try again.");
+      }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
@@ -100,28 +168,52 @@ export function SignUpForm({
                 />
               </div>
               {role === "provider" && (
-                <div className="grid gap-2">
-                  <Label htmlFor="providerName">Facility Name</Label>
-                  <Input
-                    id="providerName"
-                    type="text"
-                    placeholder="City Health Clinic"
-                    required
-                    value={providerName}
-                    onChange={(e) => setProviderName(e.target.value)}
-                  />
-                </div>
+                <>
+                  <div className="grid gap-2">
+                    <Label htmlFor="providerName">Facility Name</Label>
+                    <Input
+                      id="providerName"
+                      type="text"
+                      placeholder="City Health Clinic"
+                      required
+                      value={providerName}
+                      onChange={(e) => setProviderName(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="providerEmail">
+                      Facility Contact Email
+                      <span className="text-sm text-muted-foreground ml-1">(optional)</span>
+                    </Label>
+                    <Input
+                      id="providerEmail"
+                      type="email"
+                      placeholder="contact@clinic.com"
+                      value={providerEmail}
+                      onChange={(e) => setProviderEmail(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Public contact email for your facility (different from your login email)
+                    </p>
+                  </div>
+                </>
               )}
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder={role === "provider" ? "provider@clinic.com" : "patient@example.com"}
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder={role === "provider" ? "provider@clinic.com" : "patient@example.com"}
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onBlur={(e) => {
+                      const sanitized = sanitizeEmail(e.target.value);
+                      if (sanitized !== e.target.value) {
+                        setEmail(sanitized);
+                      }
+                    }}
+                  />
               </div>
               <div className="grid gap-2">
                 <div className="flex items-center">

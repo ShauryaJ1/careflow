@@ -1,5 +1,8 @@
 -- Enable UUID extension
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" SCHEMA extensions;
+
+-- Make sure we can use the UUID functions
+SET search_path TO public, extensions;
 
 -- Create enum types
 CREATE TYPE provider_type AS ENUM ('clinic', 'pharmacy', 'telehealth', 'hospital', 'pop_up', 'mobile', 'urgent_care');
@@ -8,7 +11,7 @@ CREATE TYPE request_status AS ENUM ('pending', 'matched', 'fulfilled', 'cancelle
 
 -- Create providers table
 CREATE TABLE providers (
-    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID DEFAULT extensions.uuid_generate_v4() PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     type provider_type NOT NULL,
     address TEXT,
@@ -38,7 +41,7 @@ CREATE TABLE providers (
 
 -- Create pop_up_events table
 CREATE TABLE pop_up_events (
-    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID DEFAULT extensions.uuid_generate_v4() PRIMARY KEY,
     provider_id UUID REFERENCES providers(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     description TEXT,
@@ -59,7 +62,7 @@ CREATE TABLE pop_up_events (
 
 -- Create patient_requests table
 CREATE TABLE patient_requests (
-    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID DEFAULT extensions.uuid_generate_v4() PRIMARY KEY,
     user_id UUID, -- Optional: link to auth.users if you have user accounts
     geo_lat DECIMAL(10, 8) NOT NULL,
     geo_long DECIMAL(11, 8) NOT NULL,
@@ -79,7 +82,7 @@ CREATE TABLE patient_requests (
 
 -- Create cache_snapshots table for performance optimization
 CREATE TABLE cache_snapshots (
-    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID DEFAULT extensions.uuid_generate_v4() PRIMARY KEY,
     cache_key VARCHAR(255) UNIQUE NOT NULL, -- e.g., "zip:90210" or "county:los-angeles" or "grid:34.05,-118.25"
     geo_area VARCHAR(100) NOT NULL,
     area_type VARCHAR(20) NOT NULL, -- 'zip', 'county', 'grid', 'city'
@@ -92,7 +95,7 @@ CREATE TABLE cache_snapshots (
 
 -- Create provider_metrics table for analytics
 CREATE TABLE provider_metrics (
-    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID DEFAULT extensions.uuid_generate_v4() PRIMARY KEY,
     provider_id UUID REFERENCES providers(id) ON DELETE CASCADE,
     date DATE NOT NULL,
     total_requests INTEGER DEFAULT 0,

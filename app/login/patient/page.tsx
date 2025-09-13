@@ -1,7 +1,7 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import { validateEmail, sanitizeEmail } from "@/lib/utils/validation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -33,9 +33,17 @@ export default function PatientLoginPage() {
     setIsLoading(true);
     setError(null);
 
+    // Validate and sanitize email
+    const sanitizedEmail = sanitizeEmail(email);
+    if (!validateEmail(sanitizedEmail)) {
+      setError("Please enter a valid email address");
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email,
+        email: sanitizedEmail,
         password,
       });
       
@@ -109,6 +117,12 @@ export default function PatientLoginPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    onBlur={(e) => {
+                      const sanitized = sanitizeEmail(e.target.value);
+                      if (sanitized !== e.target.value) {
+                        setEmail(sanitized);
+                      }
+                    }}
                     className="border-2 focus:border-blue-500"
                   />
                 </div>
