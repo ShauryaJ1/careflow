@@ -187,11 +187,11 @@ export function HospitalsList({ onEdit }: HospitalsListProps) {
                     <p className="font-medium">Hours:</p>
                     <div className="grid grid-cols-2 gap-1 mt-1">
                       {Object.entries(hospital.open_time).map(([day, hours]) => {
-                        if (!hours) return null;
+                        if (!hours || typeof hours !== 'object' || !('open' in hours) || !('close' in hours)) return null;
                         return (
                           <div key={day} className="text-xs">
                             <span className="capitalize font-medium">{day}:</span>{' '}
-                            {hours.open} - {hours.close}
+                            {(hours as { open: string; close: string }).open} - {(hours as { open: string; close: string }).close}
                           </div>
                         );
                       })}

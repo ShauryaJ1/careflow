@@ -85,7 +85,7 @@ export default function HospitalsMap({
       const processed: HospitalWithCoords[] = [];
       
       for (const hospital of hospitals) {
-        let coords = null;
+        let coords: { lat: number; lng: number } | undefined = undefined;
         
         // First check if we have known coordinates
         if (KNOWN_HOSPITAL_COORDINATES[hospital.name]) {
@@ -102,10 +102,13 @@ export default function HospitalsMap({
                 lng: hospital.location.coordinates[0]
               };
             } else if ('lat' in hospital.location && 'lng' in hospital.location) {
-              coords = {
-                lat: hospital.location.lat,
-                lng: hospital.location.lng
-              };
+              const loc = hospital.location as any;
+              if (typeof loc.lat === 'number' && typeof loc.lng === 'number') {
+                coords = {
+                  lat: loc.lat,
+                  lng: loc.lng
+                };
+              }
             }
           }
         } 
@@ -125,7 +128,7 @@ export default function HospitalsMap({
         
         processed.push({
           ...hospital,
-          coords: coords || undefined
+          coords: coords
         });
       }
       
@@ -218,8 +221,10 @@ export default function HospitalsMap({
     mapZoom = 12;
   } else if (hospitalsWithCoords.length > 0 && hospitalsWithCoords[0].coords) {
     const firstHospital = hospitalsWithCoords[0];
-    mapCenter = [firstHospital.coords.lat, firstHospital.coords.lng];
-    mapZoom = 11;
+    if (firstHospital.coords) {
+      mapCenter = [firstHospital.coords.lat, firstHospital.coords.lng];
+      mapZoom = 11;
+    }
   }
 
   // Add CSS for pulse animation
@@ -335,12 +340,6 @@ export default function HospitalsMap({
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm">Wait time: ~{Math.round(hospital.wait_score * 10)} min</span>
-                    </div>
-                  )}
-                  
-                  {hospital.distance_miles && (
-                    <div className="text-sm font-medium text-primary mt-2">
-                      Distance: {hospital.distance_miles.toFixed(1)} miles
                     </div>
                   )}
                 </div>
