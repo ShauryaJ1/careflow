@@ -25,13 +25,17 @@ import {
   BellIcon,
   UsersIcon,
   SaveIcon,
-  LogOutIcon,
   ActivityIcon,
   CalendarIcon,
   StarIcon,
-  TrendingUpIcon
+  TrendingUpIcon,
+  HospitalIcon,
+  PlusIcon
 } from "lucide-react";
 import { ServiceType, ProviderType } from "@/lib/types/database";
+import { HospitalForm } from "@/components/hospital-form";
+import { HospitalsList } from "@/components/hospitals-list";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface ProviderProfile {
   id: string;
@@ -204,10 +208,6 @@ export default function ProviderDashboard() {
     }
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/login");
-  };
 
   const addItem = (type: 'language' | 'insurance' | 'accessibility') => {
     if (!profile) return;
@@ -301,16 +301,10 @@ export default function ProviderDashboard() {
                 Welcome back, {profile.full_name || profile.provider_name || "Provider"}!
               </p>
             </div>
-            <div className="flex gap-3">
-              <Button onClick={handleSave} disabled={isSaving}>
-                <SaveIcon className="mr-2 h-4 w-4" />
-                {isSaving ? "Saving..." : "Save Changes"}
-              </Button>
-              <Button variant="outline" onClick={handleLogout}>
-                <LogOutIcon className="mr-2 h-4 w-4" />
-                Logout
-              </Button>
-            </div>
+            <Button onClick={handleSave} disabled={isSaving}>
+              <SaveIcon className="mr-2 h-4 w-4" />
+              {isSaving ? "Saving..." : "Save Changes"}
+            </Button>
           </div>
 
           <div className="flex flex-col lg:flex-row gap-6">
@@ -326,6 +320,14 @@ export default function ProviderDashboard() {
                     >
                       <BuildingIcon className="mr-2 h-4 w-4" />
                       Facility Info
+                    </Button>
+                    <Button
+                      variant={activeTab === "hospitals" ? "default" : "ghost"}
+                      className="w-full justify-start"
+                      onClick={() => setActiveTab("hospitals")}
+                    >
+                      <HospitalIcon className="mr-2 h-4 w-4" />
+                      Manage Hospitals
                     </Button>
                     <Button
                       variant={activeTab === "services" ? "default" : "ghost"}
@@ -762,6 +764,25 @@ export default function ProviderDashboard() {
                     </div>
                   </CardContent>
                 </Card>
+              )}
+
+              {activeTab === "hospitals" && (
+                <div className="space-y-6">
+                  <Tabs defaultValue="add" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="add">Add/Edit Hospital</TabsTrigger>
+                      <TabsTrigger value="list">View Hospitals</TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="add">
+                      <HospitalForm />
+                    </TabsContent>
+                    
+                    <TabsContent value="list">
+                      <HospitalsList />
+                    </TabsContent>
+                  </Tabs>
+                </div>
               )}
             </div>
           </div>

@@ -3,7 +3,8 @@ import { createTRPCRouter, publicProcedure, protectedProcedure } from '../init';
 import {
   createHospitalSchema,
   updateHospitalSchema,
-  searchHospitalsSchema
+  searchHospitalsSchema,
+  typeOfCareSchema
 } from '../validation';
 import { TRPCError } from '@trpc/server';
 
@@ -30,7 +31,8 @@ export const hospitalsRouter = createTRPCRouter({
       }
 
       if (input.state) {
-        query = query.ilike('state', `%${input.state}%`);
+        // Use exact match for state abbreviations (already normalized on frontend)
+        query = query.eq('state', input.state.toUpperCase());
       }
 
       if (input.zip_code) {
@@ -154,12 +156,17 @@ export const hospitalsRouter = createTRPCRouter({
         });
       }
 
+      // Clean up empty strings
+      const cleanedInput = {
+        ...input,
+        website: input.website === '' ? null : input.website,
+        email: input.email === '' ? null : input.email,
+        start_at: input.start_at || new Date().toISOString()
+      };
+
       const { data, error } = await supabase
         .from('hospitals')
-        .insert({
-          ...input,
-          start_at: input.start_at || new Date().toISOString()
-        })
+        .insert(cleanedInput)
         .select()
         .single();
 
@@ -199,9 +206,16 @@ export const hospitalsRouter = createTRPCRouter({
         });
       }
 
+      // Clean up empty strings
+      const cleanedData = {
+        ...input.data,
+        website: input.data.website === '' ? null : input.data.website,
+        email: input.data.email === '' ? null : input.data.email,
+      };
+
       const { data, error } = await supabase
         .from('hospitals')
-        .update(input.data)
+        .update(cleanedData)
         .eq('id', input.id)
         .select()
         .single();

@@ -26,7 +26,6 @@ import {
   PillIcon,
   AlertCircleIcon,
   SaveIcon,
-  LogOutIcon,
   ClipboardIcon,
   ActivityIcon
 } from "lucide-react";
@@ -151,10 +150,6 @@ export default function PatientDashboard() {
     }
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/login");
-  };
 
   const addItem = (type: 'condition' | 'medication' | 'allergy') => {
     if (!profile) return;
@@ -231,16 +226,10 @@ export default function PatientDashboard() {
                 Welcome back, {profile.full_name || "Patient"}!
               </p>
             </div>
-            <div className="flex gap-3">
-              <Button onClick={handleSave} disabled={isSaving}>
-                <SaveIcon className="mr-2 h-4 w-4" />
-                {isSaving ? "Saving..." : "Save Changes"}
-              </Button>
-              <Button variant="outline" onClick={handleLogout}>
-                <LogOutIcon className="mr-2 h-4 w-4" />
-                Logout
-              </Button>
-            </div>
+            <Button onClick={handleSave} disabled={isSaving}>
+              <SaveIcon className="mr-2 h-4 w-4" />
+              {isSaving ? "Saving..." : "Save Changes"}
+            </Button>
           </div>
 
           <div className="flex flex-col lg:flex-row gap-6">

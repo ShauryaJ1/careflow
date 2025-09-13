@@ -4,6 +4,7 @@ import { requestsRouter } from './requests';
 import { profilesRouter } from './profiles';
 import { authRouter } from './auth';
 import { hospitalsRouter } from './hospitals';
+import { aiRouter } from './ai';
 
 /**
  * Main application router
@@ -15,6 +16,7 @@ export const appRouter = createTRPCRouter({
   profiles: profilesRouter,
   auth: authRouter,
   hospitals: hospitalsRouter,
+  ai: aiRouter,
 });
 
 // Export type for client

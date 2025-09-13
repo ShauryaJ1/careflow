@@ -169,13 +169,13 @@ export const createHospitalSchema = z.object({
   wait_score: z.number().optional(),
   cooldown: z.number().optional(),
   op_22: z.number().optional(),
-  website: z.string().url().optional(),
-  email: z.string().email().optional(),
+  website: z.string().url().optional().or(z.literal('')),
+  email: z.string().email().optional().or(z.literal('')),
   phone_number: z.string().max(20).optional(),
   description: z.string().max(1000).optional(),
   open_time: hospitalOpenTimeSchema.optional(),
-  start_at: z.string().datetime().optional(),
-  end_at: z.string().datetime().optional()
+  start_at: z.string().optional(),
+  end_at: z.string().optional()
 });
 
 export const updateHospitalSchema = createHospitalSchema.partial();
