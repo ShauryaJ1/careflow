@@ -1,0 +1,86 @@
+---
+description: Project specification
+globs:
+alwaysApply: true
+---
+
+# 🔄 Updated Plan & Tech Stack
+
+## User-Facing Patient Screen
+
+* **Location-based search (clinics, pharmacies, pop-ups, telehealth)**
+  * **Leaflet** (map UI + geolocation display)
+  * **Supabase (Postgres + PostGIS)** for geospatial queries (KNN / ST_DWithin)
+  * **Next.js (API routes on Vercel)** to fetch from your **own DB** (canonical source)
+  * **Vercel Cron or Supabase pg_cron jobs + Scraper pipeline** (runs hourly → updates Supabase)
+  * **Stagehand/Google Search fallback** if DB is stale or missing coverage
+
+* **Offline caching (lists, contacts, directions)**
+  * **Next.js** + PWA service worker for UI/data caching
+  * **Supabase** with row versioning (`updated_at`) → delta syncs
+  * **Vercel ISR** for asset refreshes in background
+
+* **Request submission (service demand signals)**
+  * **Next.js** form → **Supabase** (`patient_requests`) w/ **RLS**
+  * **Supabase Realtime** → provider dashboards
+  * **Gemini 2.5 Pro agents** optional triage/classifier (severity, urgency)
+
+---
+
+## Provider-Facing Screen
+
+* **Post new pop-ups, mobile services, schedules**
+  * **Next.js** CRUD UI (role-gated)
+  * **Supabase** (`events`, `provider_availability`)
+  * **Supabase Realtime** → broadcast new availability
+
+* **Heatmaps of unmet requests (aggregated & anonymized)**
+  * **Supabase** materialized views + PostGIS binning
+  * **Leaflet** heatlayer for visualization
+  * **Exa + Perplexity** enrichment → “signal overlays” (events, advisories)
+
+* **Manage resources (hours, staffing, capacity)**
+  * **Next.js** provider/admin UI
+  * **Supabase** (`facilities`, `capacity_snapshots`) + RLS
+  * **Realtime** → live updates to patients
+
+---
+
+## Smart Load-Balancing
+
+* **Route patients to rural/local providers first**
+  * **Gemini 2.5 Pro agents** run ranking policy (distance, fragility index, travel time, capacity)
+  * **Supabase** stores weights (fragility, capacity)
+  * **Next.js API routes** → expose ranked recommendations
+
+* **Throttle urban clinics on spikes**
+  * **Vercel Edge Middleware** → per-region rate-limiting of recs
+  * **Gemini agents** adjust weights in response to live demand (Supabase counts)
+  * **Supabase** surge states + feature flags
+
+* **Balance telehealth vs in-person**
+  * **Next.js** checks Network Information API (bandwidth, RTT)
+  * **Gemini agents** choose modality (telehealth if long travel/low bandwidth)
+  * **Supabase** tracks outcomes → feedback into weights
+
+---
+
+## Cross-Cutting
+
+* **Auth & Roles**: Supabase Auth (patients/providers/admin); row-level security
+* **Data Pipeline**: **Vercel Cron** (API route trigger) or **Supabase pg_cron** (DB-native) → Scraper jobs → Supabase ingestion → dedup/normalize
+* **Knowledge/Search**: Stagehand + Google Search bootstrap; Exa/Perplexity enrichment (kept separate from DB)
+* **APIs/Serverless**: Next.js Route Handlers on Vercel; Edge Middleware for geo/rate control
+* **Realtime**: Supabase Realtime for dashboards & live map updates
+* **Offline/PWA**: Service worker + Supabase delta syncs
+* **Observability**: Vercel analytics, Supabase logs, decision traces
+* **UI Polish**: ShadCN UI + Tailwind + Framer Motion for clean hackathon-ready look. Feel free to add more Shadcn components, even ones we dont have in our current projecth
+* **tRPC**: use tRPC for all API-related things. Wrap API calls, cron-triggered scrapers, and DB mutations in tRPC endpoints
+
+---
+
+⚡ **What changed vs. original:**
+1. **Replaced Trigger.dev with Vercel Cron or Supabase pg_cron** for scheduled scraping.  
+2. **Pipeline simplified**: Scraper runs on schedule → ingests into Supabase.  
+3. **Stagehand/Google Search kept as bootstrap/fallback** for coverage.  
+4. **Cross-cutting section clarified** with Cron options instead of Trigger.dev.  
