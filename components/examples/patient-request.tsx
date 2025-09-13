@@ -37,30 +37,12 @@ export function PatientRequest() {
     offset: 0,
   });
 
-  // AI triage mutation
-  const triageRequest = trpc.ai.triageRequest.useMutation({
-    onSuccess: (data) => {
-      console.log('Triage result:', data);
-    },
-  });
+  // TODO: Add AI triage when Gemini integration is ready
 
   const handleSubmit = () => {
     createRequest.mutate(requestData);
   };
 
-  const handleTriage = () => {
-    triageRequest.mutate({
-      symptoms: requestData.notes || 'General checkup needed',
-      duration: '2 days',
-      severity: requestData.urgency_level * 2,
-      location: {
-        lat: requestData.geo_lat,
-        lng: requestData.geo_long,
-      },
-      hasInsurance: true,
-      preferredModality: 'any',
-    });
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -174,48 +156,9 @@ export function PatientRequest() {
             >
               {createRequest.isPending ? 'Submitting...' : 'Submit Request'}
             </Button>
-            <Button 
-              onClick={handleTriage} 
-              variant="outline"
-              disabled={triageRequest.isPending}
-            >
-              {triageRequest.isPending ? 'Analyzing...' : 'AI Triage'}
-            </Button>
           </div>
         </CardContent>
       </Card>
-
-      {triageRequest.data && (
-        <Card className="border-blue-200">
-          <CardHeader>
-            <CardTitle>AI Triage Result</CardTitle>
-            <CardDescription>Gemini 2.5 Pro Analysis</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="font-medium">Urgency Level:</span>
-                <Badge>{getUrgencyLabel(triageRequest.data.urgencyLevel)}</Badge>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium">Recommended Modality:</span>
-                <span>{triageRequest.data.recommendedModality}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium">Estimated Wait:</span>
-                <span>{triageRequest.data.estimatedWaitTime}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium">Confidence:</span>
-                <span>{(triageRequest.data.confidence * 100).toFixed(0)}%</span>
-              </div>
-              <div className="mt-4 p-3 bg-gray-50 rounded">
-                <p className="text-sm">{triageRequest.data.triageNotes}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {userRequests.data && userRequests.data.length > 0 && (
         <Card>
