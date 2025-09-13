@@ -10,11 +10,46 @@ export type AreaType = 'zip' | 'county' | 'grid' | 'city';
 
 export type TimeSlot = 'morning' | 'afternoon' | 'evening';
 
+export type TypeOfCare = 'ER' | 'urgent_care' | 'telehealth' | 'clinic' | 'pop_up_clinic' | 'practitioner';
+
 export interface ProviderHours {
   [day: string]: {
     open: string;
     close: string;
   } | null;
+}
+
+export interface HospitalOpenTime {
+  sunday?: { open: string; close: string } | null;
+  monday?: { open: string; close: string } | null;
+  tuesday?: { open: string; close: string } | null;
+  wednesday?: { open: string; close: string } | null;
+  thursday?: { open: string; close: string } | null;
+  friday?: { open: string; close: string } | null;
+  saturday?: { open: string; close: string } | null;
+}
+
+export interface Hospital {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  zip_code: string;
+  type_of_care: TypeOfCare;
+  wait_score?: number | null;
+  cooldown?: number | null;
+  op_22?: number | null;
+  website?: string | null;
+  email?: string | null;
+  phone_number?: string | null;
+  description?: string | null;
+  open_time?: HospitalOpenTime | null;
+  location?: { type: 'Point'; coordinates: [number, number] } | null;
+  created_at: string;
+  updated_at: string;
+  start_at: string;
+  end_at?: string | null;
 }
 
 export interface Provider {
@@ -169,6 +204,44 @@ export interface CreatePopUpEventInput {
   is_free?: boolean;
 }
 
+export interface CreateHospitalInput {
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  zip_code: string;
+  type_of_care: TypeOfCare;
+  wait_score?: number;
+  cooldown?: number;
+  op_22?: number;
+  website?: string;
+  email?: string;
+  phone_number?: string;
+  description?: string;
+  open_time?: HospitalOpenTime;
+  start_at?: string;
+  end_at?: string;
+}
+
+export interface UpdateHospitalInput {
+  name?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  type_of_care?: TypeOfCare;
+  wait_score?: number;
+  cooldown?: number;
+  op_22?: number;
+  website?: string;
+  email?: string;
+  phone_number?: string;
+  description?: string;
+  open_time?: HospitalOpenTime;
+  start_at?: string;
+  end_at?: string;
+}
+
 // Search/Filter types
 export interface ProviderSearchParams {
   lat?: number;
@@ -192,6 +265,18 @@ export interface PopUpEventSearchParams {
   end_date?: string;
   services?: ServiceType[];
   is_free?: boolean;
+  limit?: number;
+  offset?: number;
+}
+
+export interface HospitalSearchParams {
+  lat?: number;
+  lng?: number;
+  radius?: number; // in miles
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  type_of_care?: TypeOfCare | TypeOfCare[];
   limit?: number;
   offset?: number;
 }
@@ -242,6 +327,15 @@ export interface Database {
           created_at?: string;
         };
         Update: Partial<Omit<ProviderMetrics, 'id' | 'created_at'>>;
+      };
+      hospitals: {
+        Row: Hospital;
+        Insert: Omit<Hospital, 'id' | 'created_at' | 'updated_at'> & {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Omit<Hospital, 'id' | 'created_at' | 'updated_at'>>;
       };
     };
     Functions: {
