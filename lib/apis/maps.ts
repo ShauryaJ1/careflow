@@ -26,7 +26,7 @@ const overpassElementSchema = z.object({
   lat: z.number().optional(),
   lon: z.number().optional(),
   center: z.object({ lat: z.number(), lon: z.number() }).optional(),
-  tags: z.record(z.string()).optional(),
+  tags: z.record(z.string(), z.string()).optional(),
 });
 const overpassResponseSchema = z.object({
   elements: z.array(overpassElementSchema),
