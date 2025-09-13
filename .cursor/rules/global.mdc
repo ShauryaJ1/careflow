@@ -10,13 +10,15 @@ alwaysApply: true
 
 * **Location-based search (clinics, pharmacies, pop-ups, telehealth)**
   * **Leaflet** (map UI + geolocation display)
+  * **Mapbox** (travel time + routing directions to clinics)
   * **Supabase (Postgres + PostGIS)** for geospatial queries (KNN / ST_DWithin)
   * **Next.js (API routes on Vercel)** to fetch from your **own DB** (canonical source)
   * **Vercel Cron or Supabase pg_cron jobs + Scraper pipeline** (runs hourly → updates Supabase)
   * **Stagehand/Google Search fallback** if DB is stale or missing coverage
-  * **Travel time integration**: combine **travel time** with **current wait time** for routing decisions
+  * **Travel time integration**: combine **travel time** (Mapbox) with **current wait time** for routing decisions
   * **Wait time data**: fetch via **Solv API**, **Epic API**, or other integrations
   * **Closest ER fallback**: provide option to route directly to the nearest ER
+  * **Search radius expansion**: if fewer than **5 clinics** are found in the initial radius, expand search until at least 5 clinics are returned
 
 * **Offline caching (lists, contacts, directions)**
   * **Next.js** + PWA service worker for UI/data caching
@@ -86,3 +88,46 @@ alwaysApply: true
 * **Observability**: Vercel analytics, Supabase logs, decision traces
 * **UI Polish**: ShadCN UI + Tailwind + Framer Motion for clean hackathon-ready look. Feel free to add more Shadcn components, even ones we don’t have in our current project. Every time you make a new page or component, see if there is a ShadCN component you want to add to the project
 * **tRPC**: use tRPC for all API-related things. Wrap API calls, cron-triggered scrapers, and DB mutations in tRPC endpoints
+
+---
+
+## Flow
+
+* **Emergency Safety**  
+  * At all times, display a visible warning:  
+    > *If this is a medical emergency, call 911 immediately.*  
+  * Provide an **ER button**: if clicked, immediately show directions to the **closest ER** (via **Mapbox directions**).
+
+* **Initial Patient Input**  
+  * Begin by asking the user what they need or what their symptoms are.  
+  * Prompt them through a series of questions to help determine **acuity** and severity.
+
+* **Decision Pathway**  
+  * Based on responses, determine if the patient should go to **ER, urgent care, or a pop-up clinic**.  
+  * Confirm with the user before final recommendation.  
+  * If applicable, provide option to start a **telehealth visit**.
+
+* **Routing & Load Balancing**  
+  * For in-person visits:  
+    * Find the **shortest-time clinic** = travel time (**Mapbox**) + clinic wait time.  
+    * Prefer **rural hospitals** when possible to aid load balancing.  
+    * Expand search radius until at least **5 clinics** are found.  
+  * For telehealth visits: prefer **rural providers** first when available.
+
+* **Clinic Data Sourcing**  
+  * Build list of clinics from **scraped + normalized database**.  
+  * On each request, re-run scrape unless time + distance are close to a previous call.  
+  * Scraped data saved to database for reuse.  
+  * For rural areas, run daily scrape and **cache locally** for offline access.
+
+* **User Presentation**  
+  * Show all available options, ordered by **shortest-time first**, with calculated times displayed.  
+  * If in-person chosen: provide directions via **Mapbox** to hospital.  
+  * If telehealth or urgent care supports it: allow **appointment scheduling** to reduce wait time.
+
+* **Other Features**  
+  * In **settings**, patients can store insurance and plan details → system prefers **in-network providers**.  
+  * In **settings**, patints can modify the search radius for clincs in their area
+  * Patient can ask questions about the process at any time → conversational agent support.
+
+---
