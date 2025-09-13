@@ -182,6 +182,23 @@ export const profilesRouter = createTRPCRouter({
 
       // If no provider_id exists, create a new provider record
       if (!profile.provider_id && provider_name) {
+        // First check if a provider with this email already exists
+        const { data: existingProvider } = await ctx.supabase
+          .from("providers")
+          .select("id")
+          .eq("email", ctx.user.email!)
+          .single();
+
+        if (existingProvider) {
+          // Link existing provider to this profile
+          await ctx.supabase
+            .from("profiles")
+            .update({ provider_id: existingProvider.id })
+            .eq("id", userId);
+            
+          return { success: true, providerId: existingProvider.id };
+        }
+
         const { data: newProvider, error: createError } = await ctx.supabase
           .from("providers")
           .insert({

@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import { validateEmail, validatePassword, sanitizeEmail } from "@/lib/utils/validation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -40,6 +41,22 @@ export function SignUpForm({
     setIsLoading(true);
     setError(null);
 
+    // Validate email
+    const sanitizedEmail = sanitizeEmail(email);
+    if (!validateEmail(sanitizedEmail)) {
+      setError("Please enter a valid email address");
+      setIsLoading(false);
+      return;
+    }
+
+    // Validate password strength
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      setError(passwordValidation.errors.join(". "));
+      setIsLoading(false);
+      return;
+    }
+
     if (password !== repeatPassword) {
       setError("Passwords do not match");
       setIsLoading(false);
@@ -57,16 +74,40 @@ export function SignUpForm({
         metadata.provider_type = "clinic";
       }
       
-      const { error } = await supabase.auth.signUp({
-        email,
+      const { data, error } = await supabase.auth.signUp({
+        email: sanitizedEmail,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/dashboard/${role}`,
           data: metadata,
         },
       });
-      if (error) throw error;
-      router.push("/auth/sign-up-success");
+      
+      if (error) {
+        // Check for specific error types
+        if (error.message.includes("already registered") || error.message.includes("already exists")) {
+          throw new Error(`This email is already registered. Please login instead or use a different email.`);
+        }
+        throw error;
+      }
+      
+      // Auto-login after signup (naive auth - no email verification)
+      if (data?.user) {
+        // Try to sign in immediately after signup
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: sanitizedEmail,
+          password,
+        });
+        
+        if (signInError) {
+          throw new Error("Account created but failed to sign in. Please try logging in manually.");
+        }
+        
+        // Redirect to appropriate dashboard
+        router.push(`/dashboard/${role}`);
+      } else {
+        throw new Error("An unexpected error occurred during sign-up.");
+      }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
@@ -114,14 +155,20 @@ export function SignUpForm({
               )}
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder={role === "provider" ? "provider@clinic.com" : "patient@example.com"}
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder={role === "provider" ? "provider@clinic.com" : "patient@example.com"}
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onBlur={(e) => {
+                      const sanitized = sanitizeEmail(e.target.value);
+                      if (sanitized !== e.target.value) {
+                        setEmail(sanitized);
+                      }
+                    }}
+                  />
               </div>
               <div className="grid gap-2">
                 <div className="flex items-center">
