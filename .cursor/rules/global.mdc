@@ -4,7 +4,7 @@ globs:
 alwaysApply: true
 ---
 
-# 🔄 Updated Plan & Tech Stack
+# Updated Plan & Tech Stack 
 
 ## User-Facing Patient Screen
 
@@ -14,6 +14,9 @@ alwaysApply: true
   * **Next.js (API routes on Vercel)** to fetch from your **own DB** (canonical source)
   * **Vercel Cron or Supabase pg_cron jobs + Scraper pipeline** (runs hourly → updates Supabase)
   * **Stagehand/Google Search fallback** if DB is stale or missing coverage
+  * **Travel time integration**: combine **travel time** with **current wait time** for routing decisions
+  * **Wait time data**: fetch via **Solv API**, **Epic API**, or other integrations
+  * **Closest ER fallback**: provide option to route directly to the nearest ER
 
 * **Offline caching (lists, contacts, directions)**
   * **Next.js** + PWA service worker for UI/data caching
@@ -24,6 +27,12 @@ alwaysApply: true
   * **Next.js** form → **Supabase** (`patient_requests`) w/ **RLS**
   * **Supabase Realtime** → provider dashboards
   * **Gemini 2.5 Pro agents** optional triage/classifier (severity, urgency)
+
+* **Telehealth fallback (low-acuity cases)**
+  * If vitals/symptoms indicate **low acuity** and site supports video visits, show **“Start Telehealth Now”** when in-person queues spike
+  * Integrate with **Solv/InQuicker virtual inventories** where available
+  * **Prefer rural providers** when possible for telehealth visits
+  * Allow patients to **book urgent care appointments** directly if needed
 
 ---
 
@@ -52,6 +61,7 @@ alwaysApply: true
   * **Gemini 2.5 Pro agents** run ranking policy (distance, fragility index, travel time, capacity)
   * **Supabase** stores weights (fragility, capacity)
   * **Next.js API routes** → expose ranked recommendations
+  * Preference for **rural providers** when applicable (including telehealth)
 
 * **Throttle urban clinics on spikes**
   * **Vercel Edge Middleware** → per-region rate-limiting of recs
@@ -74,13 +84,5 @@ alwaysApply: true
 * **Realtime**: Supabase Realtime for dashboards & live map updates
 * **Offline/PWA**: Service worker + Supabase delta syncs
 * **Observability**: Vercel analytics, Supabase logs, decision traces
-* **UI Polish**: ShadCN UI + Tailwind + Framer Motion for clean hackathon-ready look. Feel free to add more Shadcn components, even ones we dont have in our current projecth
+* **UI Polish**: ShadCN UI + Tailwind + Framer Motion for clean hackathon-ready look. Feel free to add more Shadcn components, even ones we don’t have in our current project
 * **tRPC**: use tRPC for all API-related things. Wrap API calls, cron-triggered scrapers, and DB mutations in tRPC endpoints
-
----
-
-⚡ **What changed vs. original:**
-1. **Replaced Trigger.dev with Vercel Cron or Supabase pg_cron** for scheduled scraping.  
-2. **Pipeline simplified**: Scraper runs on schedule → ingests into Supabase.  
-3. **Stagehand/Google Search kept as bootstrap/fallback** for coverage.  
-4. **Cross-cutting section clarified** with Cron options instead of Trigger.dev.  
