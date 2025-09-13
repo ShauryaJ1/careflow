@@ -92,35 +92,43 @@ export function SignUpForm({
         throw error;
       }
       
-      // Auto-login after signup (naive auth - no email verification)
+      // Check if signup was successful
       if (data?.user) {
-        // Check if we already have a session (auto-confirmed)
+        // With email confirmation disabled in Supabase Dashboard,
+        // users should get a session immediately
         if (data.session) {
-          // Already logged in with session
+          // User is already logged in with session
+          toast.success("Account created successfully!");
           router.push(`/dashboard/${role}`);
         } else {
-          // Add a small delay to ensure the user is fully created and confirmed
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          // No session means email confirmation might still be enabled
+          // or there's a configuration issue
+          console.log("User created but no session. Email confirmation may be enabled.");
           
-          // Try to sign in after the delay
+          // Try to sign in manually with a longer delay
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
           const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
             email: sanitizedEmail,
             password,
           });
           
           if (signInError) {
-            console.error("Failed to auto-login after signup:", signInError);
-            // Don't throw error - just redirect to login page
-            // The account was created successfully, they just need to login manually
-            toast.success("Account created successfully! Please log in.");
+            console.error("Auto-login failed:", signInError);
+            // Account was created, just needs manual login
+            toast.success("Account created! Please log in to continue.");
             router.push(`/login/${role}`);
-          } else {
-            // Successfully logged in
+          } else if (signInData.session) {
+            toast.success("Welcome to CareFlow!");
             router.push(`/dashboard/${role}`);
+          } else {
+            // Fallback to manual login
+            toast.info("Please check your email to confirm your account, or try logging in.");
+            router.push(`/login/${role}`);
           }
         }
       } else {
-        throw new Error("An unexpected error occurred during sign-up.");
+        throw new Error("Failed to create account. Please try again.");
       }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");

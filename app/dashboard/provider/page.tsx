@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import {
   BuildingIcon,
   MapPinIcon,
@@ -95,10 +96,10 @@ export default function ProviderDashboard() {
   
   const updateProfile = trpc.profiles.updateProviderProfile.useMutation({
     onSuccess: () => {
-      alert("Profile updated successfully!");
+      toast.success("Profile updated successfully!");
     },
     onError: (error: any) => {
-      alert(`Error updating profile: ${error.message}`);
+      toast.error(`Error updating profile: ${error.message}`);
     }
   });
 
