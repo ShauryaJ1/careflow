@@ -91,17 +91,24 @@ export default function PatientDashboard() {
       }
 
       const { data: profileData, error } = await supabase
-        .from("profiles")
+        .from("patient_profiles")
         .select("*")
         .eq("id", user.id)
         .single();
 
-      if (error) throw error;
-
-      // Check if user is a patient
-      if (profileData.role !== "patient") {
-        router.push("/dashboard/provider");
-        return;
+      if (error) {
+        // User might be a provider, redirect them
+        const { data: providerProfile } = await supabase
+          .from("provider_profiles")
+          .select("id")
+          .eq("id", user.id)
+          .single();
+        
+        if (providerProfile) {
+          router.push("/dashboard/provider");
+          return;
+        }
+        throw error;
       }
 
       setProfile({

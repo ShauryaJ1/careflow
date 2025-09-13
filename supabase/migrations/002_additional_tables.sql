@@ -13,7 +13,7 @@ CREATE TABLE profiles (
 
 -- Create scraper_jobs table for tracking data pipeline jobs
 CREATE TABLE scraper_jobs (
-    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID DEFAULT extensions.uuid_generate_v4() PRIMARY KEY,
     source VARCHAR(50) NOT NULL,
     query TEXT,
     location JSONB,
@@ -27,7 +27,7 @@ CREATE TABLE scraper_jobs (
 
 -- Create triage_results table for AI triage history
 CREATE TABLE triage_results (
-    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID DEFAULT extensions.uuid_generate_v4() PRIMARY KEY,
     input JSONB NOT NULL,
     result JSONB NOT NULL,
     user_id UUID REFERENCES auth.users(id),
@@ -36,7 +36,7 @@ CREATE TABLE triage_results (
 
 -- Create capacity_snapshots table for tracking provider capacity over time
 CREATE TABLE capacity_snapshots (
-    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID DEFAULT extensions.uuid_generate_v4() PRIMARY KEY,
     provider_id UUID REFERENCES providers(id) ON DELETE CASCADE,
     capacity INTEGER NOT NULL,
     timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

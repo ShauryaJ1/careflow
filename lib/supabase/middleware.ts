@@ -62,13 +62,26 @@ export async function updateSession(request: NextRequest) {
   if (user && request.nextUrl.pathname.startsWith("/login")) {
     const url = request.nextUrl.clone();
     // Get user profile to determine role
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
+    // Check patient_profiles first
+    const { data: patientProfile } = await supabase
+      .from("patient_profiles")
+      .select("id")
       .eq("id", user.sub)
       .single();
     
-    url.pathname = profile?.role === "provider" ? "/dashboard/provider" : "/dashboard/patient";
+    if (patientProfile) {
+      url.pathname = "/dashboard/patient";
+    } else {
+      // Check provider_profiles
+      const { data: providerProfile } = await supabase
+        .from("provider_profiles")
+        .select("id")
+        .eq("id", user.sub)
+        .single();
+      
+      url.pathname = providerProfile ? "/dashboard/provider" : "/dashboard/patient";
+    }
+    
     return NextResponse.redirect(url);
   }
 

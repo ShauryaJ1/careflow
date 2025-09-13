@@ -1,8 +1,8 @@
-import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../init";
+import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 
-// Input schemas for profile updates
+// Input schemas
 const patientProfileUpdateSchema = z.object({
   full_name: z.string().nullable().optional(),
   phone: z.string().nullable().optional(),
@@ -28,18 +28,23 @@ const patientProfileUpdateSchema = z.object({
 });
 
 const providerProfileUpdateSchema = z.object({
+  // Personal info
   full_name: z.string().nullable().optional(),
   phone: z.string().nullable().optional(),
   address: z.string().nullable().optional(),
   geo_lat: z.number().nullable().optional(),
   geo_long: z.number().nullable().optional(),
   preferred_language: z.string().nullable().optional(),
+  specialty: z.string().nullable().optional(),
+  license_number: z.string().nullable().optional(),
+  years_of_experience: z.number().nullable().optional(),
   notification_preferences: z.object({
     email: z.boolean(),
     sms: z.boolean(),
     push: z.boolean(),
   }).nullable().optional(),
-  // Provider-specific fields
+  
+  // Facility info (these are now stored directly in provider_profiles)
   provider_name: z.string().nullable().optional(),
   provider_type: z.enum(["clinic", "pharmacy", "telehealth", "hospital", "pop_up", "mobile", "urgent_care"]).nullable().optional(),
   services: z.array(z.enum(["general", "dental", "maternal_care", "urgent_care", "mental_health", "pediatric", "vaccination", "specialty", "diagnostic"])).nullable().optional(),
@@ -57,35 +62,40 @@ export const profilesRouter = createTRPCRouter({
   getProfile: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.user.id;
     
-    // Get profile data
-    const { data: profile, error } = await ctx.supabase
-      .from("profiles")
+    // Check if user is a patient
+    const { data: patientProfile } = await ctx.supabase
+      .from("patient_profiles")
       .select("*")
       .eq("id", userId)
       .single();
-
-    if (error) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Profile not found",
-      });
-    }
-
-    // If provider, also fetch provider details
-    if (profile.role === "provider" && profile.provider_id) {
-      const { data: providerData } = await ctx.supabase
-        .from("providers")
-        .select("*")
-        .eq("id", profile.provider_id)
-        .single();
-
+    
+    if (patientProfile) {
       return {
-        ...profile,
-        providerData,
+        ...patientProfile,
+        role: "patient",
+        email: ctx.user.email,
       };
     }
-
-    return profile;
+    
+    // Check if user is a provider
+    const { data: providerProfile } = await ctx.supabase
+      .from("provider_profiles")
+      .select("*")
+      .eq("id", userId)
+      .single();
+    
+    if (providerProfile) {
+      return {
+        ...providerProfile,
+        role: "provider",
+        email: ctx.user.email,
+      };
+    }
+    
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "Profile not found",
+    });
   }),
 
   // Update patient profile
@@ -94,23 +104,23 @@ export const profilesRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.user.id;
 
-      // First verify user is a patient
-      const { data: profile, error: profileError } = await ctx.supabase
-        .from("profiles")
-        .select("role")
+      // Verify user is a patient
+      const { data: exists } = await ctx.supabase
+        .from("patient_profiles")
+        .select("id")
         .eq("id", userId)
         .single();
 
-      if (profileError || profile.role !== "patient") {
+      if (!exists) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Only patients can update patient profiles",
         });
       }
 
-      // Update profile
+      // Update patient profile
       const { data, error } = await ctx.supabase
-        .from("profiles")
+        .from("patient_profiles")
         .update({
           ...input,
           updated_at: new Date().toISOString(),
@@ -129,169 +139,94 @@ export const profilesRouter = createTRPCRouter({
       return data;
     }),
 
-  // Update provider profile
+  // Update provider profile - SIMPLIFIED VERSION
   updateProviderProfile: protectedProcedure
     .input(providerProfileUpdateSchema)
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.user.id;
 
-      // First verify user is a provider and get provider_id
-      const { data: profile, error: profileError } = await ctx.supabase
-        .from("profiles")
-        .select("role, provider_id")
+      // Verify user is a provider
+      const { data: exists } = await ctx.supabase
+        .from("provider_profiles")
+        .select("id")
         .eq("id", userId)
         .single();
 
-      if (profileError || profile.role !== "provider") {
+      if (!exists) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Only providers can update provider profiles",
         });
       }
 
-      // Extract provider-specific fields
-      const {
-        provider_name,
-        provider_type,
-        services,
-        languages_spoken,
-        telehealth_available,
-        accepts_walk_ins,
-        website,
-        insurance_accepted,
-        capacity,
-        accessibility_features,
-        ...profileFields
-      } = input;
+      // Build update data - handle arrays specially to allow clearing
+      const updateData: any = {
+        updated_at: new Date().toISOString(),
+      };
 
-      // Update profile table
-      const { error: updateProfileError } = await ctx.supabase
-        .from("profiles")
-        .update({
-          ...profileFields,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", userId);
+      // Add all defined fields to update
+      Object.entries(input).forEach(([key, value]) => {
+        if (value !== undefined) {
+          // For array fields, always set them (even if empty) to allow clearing
+          if (Array.isArray(value)) {
+            updateData[key] = value;
+          } else {
+            updateData[key] = value;
+          }
+        }
+      });
 
-      if (updateProfileError) {
+      console.log("Updating provider profile with data:", updateData);
+
+      // Update provider profile directly - ALL fields are now in provider_profiles table
+      const { data, error } = await ctx.supabase
+        .from("provider_profiles")
+        .update(updateData)
+        .eq("id", userId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Provider profile update error:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to update profile",
+          message: `Failed to update provider profile: ${error.message}`,
         });
       }
 
-      // If no provider_id exists, create a new provider record
-      if (!profile.provider_id && provider_name) {
-        // First check if a provider with this email already exists
-        const { data: existingProvider } = await ctx.supabase
-          .from("providers")
-          .select("id")
-          .eq("email", ctx.user.email!)
-          .single();
-
-        if (existingProvider) {
-          // Link existing provider to this profile
-          await ctx.supabase
-            .from("profiles")
-            .update({ provider_id: existingProvider.id })
-            .eq("id", userId);
-            
-          return { success: true, providerId: existingProvider.id };
-        }
-
-        const { data: newProvider, error: createError } = await ctx.supabase
-          .from("providers")
-          .insert({
-            name: provider_name,
-            type: provider_type || "clinic",
-            address: profileFields.address,
-            geo_lat: profileFields.geo_lat,
-            geo_long: profileFields.geo_long,
-            phone: profileFields.phone,
-            email: ctx.user.email!,
-            services: services || [],
-            languages_spoken: languages_spoken || [],
-            telehealth_available: telehealth_available || false,
-            accepts_walk_ins: accepts_walk_ins || false,
-            website,
-            insurance_accepted: insurance_accepted || [],
-            capacity,
-            accessibility_features: accessibility_features || [],
-            is_active: true,
-          })
-          .select()
-          .single();
-
-        if (createError) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to create provider record",
-          });
-        }
-
-        // Update profile with new provider_id
-        await ctx.supabase
-          .from("profiles")
-          .update({ provider_id: newProvider.id })
-          .eq("id", userId);
-
-        return { success: true, providerId: newProvider.id };
-      }
-
-      // Update existing provider record
-      if (profile.provider_id) {
-        const providerUpdateData: any = {};
-        
-        if (provider_name !== undefined) providerUpdateData.name = provider_name;
-        if (provider_type !== undefined) providerUpdateData.type = provider_type;
-        if (services !== undefined) providerUpdateData.services = services;
-        if (languages_spoken !== undefined) providerUpdateData.languages_spoken = languages_spoken;
-        if (telehealth_available !== undefined) providerUpdateData.telehealth_available = telehealth_available;
-        if (accepts_walk_ins !== undefined) providerUpdateData.accepts_walk_ins = accepts_walk_ins;
-        if (website !== undefined) providerUpdateData.website = website;
-        if (insurance_accepted !== undefined) providerUpdateData.insurance_accepted = insurance_accepted;
-        if (capacity !== undefined) providerUpdateData.capacity = capacity;
-        if (accessibility_features !== undefined) providerUpdateData.accessibility_features = accessibility_features;
-        if (profileFields.address !== undefined) providerUpdateData.address = profileFields.address;
-        if (profileFields.geo_lat !== undefined) providerUpdateData.geo_lat = profileFields.geo_lat;
-        if (profileFields.geo_long !== undefined) providerUpdateData.geo_long = profileFields.geo_long;
-        if (profileFields.phone !== undefined) providerUpdateData.phone = profileFields.phone;
-        
-        providerUpdateData.updated_at = new Date().toISOString();
-
-        const { error: updateProviderError } = await ctx.supabase
-          .from("providers")
-          .update(providerUpdateData)
-          .eq("id", profile.provider_id);
-
-        if (updateProviderError) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to update provider record",
-          });
-        }
-      }
-
-      return { success: true };
+      console.log("Provider profile updated successfully:", data);
+      return { success: true, data };
     }),
 
   // Get user role
   getUserRole: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.user.id;
     
-    const { data, error } = await ctx.supabase
-      .from("profiles")
-      .select("role")
+    // Check if patient
+    const { data: patient } = await ctx.supabase
+      .from("patient_profiles")
+      .select("id")
       .eq("id", userId)
       .single();
-
-    if (error) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Profile not found",
-      });
+    
+    if (patient) {
+      return { role: "patient" };
     }
-
-    return data.role;
+    
+    // Check if provider
+    const { data: provider } = await ctx.supabase
+      .from("provider_profiles")
+      .select("id")
+      .eq("id", userId)
+      .single();
+    
+    if (provider) {
+      return { role: "provider" };
+    }
+    
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "User role not found",
+    });
   }),
 });
