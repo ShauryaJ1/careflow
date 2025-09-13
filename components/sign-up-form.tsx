@@ -32,6 +32,7 @@ export function SignUpForm({
   const [repeatPassword, setRepeatPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [providerName, setProviderName] = useState("");
+  const [providerEmail, setProviderEmail] = useState(""); // Optional provider facility email
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -73,6 +74,10 @@ export function SignUpForm({
       if (role === "provider" && providerName) {
         metadata.provider_name = providerName;
         metadata.provider_type = "clinic";
+        // Provider email is optional - if not provided, the provider record won't have an email
+        if (providerEmail) {
+          metadata.provider_email = providerEmail;
+        }
       }
       
       const { data, error } = await supabase.auth.signUp({
@@ -163,17 +168,35 @@ export function SignUpForm({
                 />
               </div>
               {role === "provider" && (
-                <div className="grid gap-2">
-                  <Label htmlFor="providerName">Facility Name</Label>
-                  <Input
-                    id="providerName"
-                    type="text"
-                    placeholder="City Health Clinic"
-                    required
-                    value={providerName}
-                    onChange={(e) => setProviderName(e.target.value)}
-                  />
-                </div>
+                <>
+                  <div className="grid gap-2">
+                    <Label htmlFor="providerName">Facility Name</Label>
+                    <Input
+                      id="providerName"
+                      type="text"
+                      placeholder="City Health Clinic"
+                      required
+                      value={providerName}
+                      onChange={(e) => setProviderName(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="providerEmail">
+                      Facility Contact Email
+                      <span className="text-sm text-muted-foreground ml-1">(optional)</span>
+                    </Label>
+                    <Input
+                      id="providerEmail"
+                      type="email"
+                      placeholder="contact@clinic.com"
+                      value={providerEmail}
+                      onChange={(e) => setProviderEmail(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Public contact email for your facility (different from your login email)
+                    </p>
+                  </div>
+                </>
               )}
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
