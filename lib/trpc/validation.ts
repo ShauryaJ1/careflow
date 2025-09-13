@@ -43,6 +43,15 @@ export const areaTypeSchema = z.enum([
   'city'
 ]);
 
+export const typeOfCareSchema = z.enum([
+  'ER',
+  'urgent_care',
+  'telehealth',
+  'clinic',
+  'pop_up_clinic',
+  'practitioner'
+]);
+
 // Provider hours schema
 export const providerHoursSchema = z.record(
   z.string(),
@@ -51,6 +60,38 @@ export const providerHoursSchema = z.record(
     close: z.string()
   }).nullable()
 );
+
+// Hospital open time schema
+export const hospitalOpenTimeSchema = z.object({
+  sunday: z.object({
+    open: z.string(),
+    close: z.string()
+  }).nullable().optional(),
+  monday: z.object({
+    open: z.string(),
+    close: z.string()
+  }).nullable().optional(),
+  tuesday: z.object({
+    open: z.string(),
+    close: z.string()
+  }).nullable().optional(),
+  wednesday: z.object({
+    open: z.string(),
+    close: z.string()
+  }).nullable().optional(),
+  thursday: z.object({
+    open: z.string(),
+    close: z.string()
+  }).nullable().optional(),
+  friday: z.object({
+    open: z.string(),
+    close: z.string()
+  }).nullable().optional(),
+  saturday: z.object({
+    open: z.string(),
+    close: z.string()
+  }).nullable().optional()
+});
 
 // Provider schemas
 export const createProviderSchema = z.object({
@@ -115,6 +156,43 @@ export const updateRequestStatusSchema = z.object({
   status: requestStatusSchema,
   matchedProviderId: z.string().uuid().optional(),
   matchScore: z.number().min(0).max(1).optional()
+});
+
+// Hospital schemas
+export const createHospitalSchema = z.object({
+  name: z.string().min(1).max(255),
+  address: z.string().min(1),
+  city: z.string().min(1),
+  state: z.string().min(1),
+  zip_code: z.string().min(1),
+  type_of_care: typeOfCareSchema,
+  wait_score: z.number().optional(),
+  cooldown: z.number().optional(),
+  op_22: z.number().optional(),
+  website: z.string().url().optional().or(z.literal('')),
+  email: z.string().email().optional().or(z.literal('')),
+  phone_number: z.string().max(20).optional(),
+  description: z.string().max(1000).optional(),
+  open_time: hospitalOpenTimeSchema.optional(),
+  start_at: z.string().optional(),
+  end_at: z.string().optional()
+});
+
+export const updateHospitalSchema = createHospitalSchema.partial();
+
+export const searchHospitalsSchema = z.object({
+  lat: z.number().min(-90).max(90).optional(),
+  lng: z.number().min(-180).max(180).optional(),
+  radius: z.number().positive().default(10),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  zip_code: z.string().optional(),
+  type_of_care: z.union([
+    typeOfCareSchema,
+    z.array(typeOfCareSchema)
+  ]).optional(),
+  limit: z.number().int().positive().max(100).default(50),
+  offset: z.number().int().min(0).default(0)
 });
 
 // Future schemas - to be added when features are implemented

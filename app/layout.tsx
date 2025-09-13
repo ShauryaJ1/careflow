@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { TRPCProvider } from "@/lib/trpc/provider";
 import { Toaster } from "@/components/ui/sonner";
+import { Navbar } from "@/components/navbar";
 import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
@@ -36,7 +37,10 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            {children}
+            <Navbar />
+            <main className="min-h-screen">
+              {children}
+            </main>
             <Toaster position="top-right" richColors />
           </ThemeProvider>
         </TRPCProvider>
