@@ -63,7 +63,7 @@ const tools = {
       lng: z.number().optional().describe('User longitude for distance calculation'),
       radius: z.number().optional().default(25).describe('Search radius in miles'),
     }),
-    execute: async ({ city, state, typeOfCare, lat, lng, radius }) => {
+    execute: async ({ city, state, typeOfCare, lat, lng }) => {
       const supabase = await createClient();
       
       let query = supabase
@@ -116,7 +116,7 @@ const tools = {
         );
         
         // Sort by total time
-        results = hospitalsWithDistance.sort((a: any, b: any) => {
+        results = hospitalsWithDistance.sort((a, b) => {
           const aTime = a.total_time_minutes || 999;
           const bTime = b.total_time_minutes || 999;
           return aTime - bTime;
@@ -130,7 +130,7 @@ const tools = {
     },
   }),
 
-  // Search for established facilities using OpenStreetMap
+  // Search for established facilities using OpenStr eetMap
   searchEstablishedFacilities: tool({
     description: 'Search for established hospitals and clinics in the area using OpenStreetMap data',
     inputSchema: z.object({
@@ -173,7 +173,7 @@ const tools = {
         mode: z.enum(['driving', 'walking', 'cycling']).optional().default('driving'),
       })
       .describe('Provide either all of fromLat/fromLng/toLat/toLng or fromText/toText'),
-    execute: async (input: any) => {
+    execute: async (input) => {
       try {
         const profile: 'driving' | 'walking' | 'cycling' = input.mode || 'driving';
         let from: { lat: number; lng: number } | string | undefined;
@@ -235,10 +235,10 @@ const tools = {
 
       const newScore = (hospital.wait_score || 0) + increment;
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('hospitals')
         .update({ 
-          wait_score: newScore,
+          wait_score: newScore ,
           updated_at: new Date().toISOString(),
         })
         .eq('id', hospitalId)
@@ -270,6 +270,116 @@ const tools = {
       hospitalName: z.string().describe('Name of the hospital'),
       estimatedTime: z.string().describe('Estimated total time'),
     }),
+  }),
+
+  // Log patient location request (non-visual, for tracking demand)
+  logPatientRequest: tool({
+    description: 'Log patient location request when user provides their location (non-visual, background operation)',
+    inputSchema: z.object({
+      reason: z.string().describe('What the patient is seeking care for'),
+      typeOfCare: z.enum(['ER', 'urgent_care', 'telehealth', 'clinic', 'pop_up_clinic', 'practitioner'])
+        .describe('Type of care determined from symptoms'),
+      address: z.string().optional().describe('Street address if provided'),
+      city: z.string().optional().describe('City name'),
+      state: z.string().length(2).optional().describe('State abbreviation'),
+      zipCode: z.string().optional().describe('ZIP code'),
+    }),
+    execute: async ({ reason, typeOfCare, address, city, state, zipCode }) => {
+      try {
+        // Get authenticated user
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          return {
+            success: false,
+            error: 'User not authenticated',
+          };
+        }
+        
+        // Build address string for geocoding
+        const addressParts = [];
+        if (address) addressParts.push(address);
+        if (city) addressParts.push(city);
+        if (state) addressParts.push(state);
+        if (zipCode) addressParts.push(zipCode);
+        const fullAddress = addressParts.join(', ');
+        
+        let latitude = null;
+        let longitude = null;
+        
+        // Try to geocode the address
+        if (fullAddress) {
+          try {
+            const geocodeResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/geocode`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ 
+                address: fullAddress,
+                includeDetails: true 
+              }),
+            });
+            
+            if (geocodeResponse.ok) {
+              const geocodeData = await geocodeResponse.json();
+              if (geocodeData.success && geocodeData.location) {
+                latitude = geocodeData.location.lat;
+                longitude = geocodeData.location.lng;
+                
+                // Use geocoded data to fill in missing fields
+                if (!city && geocodeData.details?.city) {
+                  city = geocodeData.details.city;
+                }
+                if (!state && geocodeData.details?.state) {
+                  state = geocodeData.details.state;
+                }
+                if (!zipCode && geocodeData.details?.zipCode) {
+                  zipCode = geocodeData.details.zipCode;
+                }
+              }
+            }
+          } catch (geocodeError) {
+            console.warn('Geocoding failed, continuing without coordinates:', geocodeError);
+          }
+        }
+        
+        // Insert directly into the database
+        const { data, error } = await supabase
+          .from('requests')
+          .insert({
+            user_id: user.id,
+            reason,
+            type_of_care: typeOfCare,
+            address,
+            city,
+            state,
+            zipcode: zipCode,
+            latitude,
+            longitude,
+          })
+          .select('request_id')
+          .single();
+        
+        if (error) {
+          console.error('Database error logging request:', error);
+          throw error;
+        }
+        
+        return {
+          success: true,
+          message: 'Location request logged successfully',
+          requestId: data?.request_id,
+        };
+      } catch (error) {
+        console.error('Error logging patient request:', error);
+        return {
+          success: false,
+          error: 'Failed to log location request',
+        };
+      }
+    },
   }),
 
   // Show hospitals on map (client-side visual tool)
@@ -349,7 +459,7 @@ const tools = {
         });
         
         // Sort by distance - hospitals without locations go to the end
-        results = results.sort((a: any, b: any) => {
+        results = results.sort((a, b) => {
           const aDist = a.distance_miles !== undefined ? a.distance_miles : 999;
           const bDist = b.distance_miles !== undefined ? b.distance_miles : 999;
           return aDist - bDist;
@@ -387,7 +497,7 @@ const tools = {
           searchQuery = `pop-up clinic mobile health clinic community health event free clinic ${location} ${userNeeds || ''}`;
         }
         
-        console.log('Exa search query:', searchQuery);
+        // Exa search query: searchQuery
         
         // Perform Exa search for 5 results
         const searchResults = await exa.searchAndContents(searchQuery, {
@@ -395,8 +505,8 @@ const tools = {
           useAutoprompt: true,
         });
         
-        console.log(`Found ${searchResults.results.length} results from Exa`);
-        console.log('Exa search results:', searchResults.results);
+        // Found searchResults.results.length results from Exa
+        // Exa search results: searchResults.results
         
         // Define the hospital schema for generateObject
         const hospitalSchema = z.object({
@@ -456,7 +566,7 @@ const tools = {
           }
         }
         
-        console.log(`Successfully processed ${processedProviders.length} providers`);
+        // Successfully processed processedProviders.length providers
         
         // Update database with new providers
         // Use service role client to bypass RLS for system inserts
@@ -513,7 +623,7 @@ const tools = {
           }
         }
         
-        console.log(`Added/updated ${insertedProviders.length} providers in database`);
+        // Added/updated insertedProviders.length providers in database
         
         return {
           searchQuery,
@@ -603,17 +713,23 @@ When users are looking for TELEHEALTH or POP-UP CLINICS:
    - Type of care needed (telehealth or pop-up clinic)
    - Any specific user needs or symptoms
 
+6. Always call searchEstablishedFacilities AFTER searchHospitalsInDBafter and AFTER you have responded to the users original request to get established hospitals and clinics in the area once you have the users location
+7. You must use searchHospitalsInDB to get hospitals and clinics in the area once you have the users location. If one type of care is not found, you should try the other type of care. ALWAYS INCLUDE ER
 CONVERSATION FLOW:
 1. Greet warmly and check for emergencies
 2. Ask about symptoms and their severity
 3. Ask about duration and any worsening
 4. Consider patient's location and mobility
-5. For telehealth/pop-up clinics: Get location NAME (city/state), then use searchProvidersWithExa
-6. For other care types: Search existing database with searchHospitalsInDB
-7. Present options sorted by total time (travel + wait)
-8. Prefer rural facilities when appropriate for load balancing
-9. Offer telehealth when suitable
-10. Update wait scores when user selects a facility
+5. **IMPORTANT**: When user provides ANY location information (address, city, state, or ZIP):
+   - Immediately call logPatientRequest to track demand (non-visual, background)
+   - This helps providers understand where care is needed
+   - Do NOT tell the user you're logging this - it's automatic background tracking
+6. For telehealth/pop-up clinics: Get location NAME (city/state), then use searchProvidersWithExa
+7. For other care types: Search existing database with searchHospitalsInDB
+8. Present options sorted by total time (travel + wait)
+9. Prefer rural facilities when appropriate for load balancing
+10. Offer telehealth when suitable
+11. Update wait scores when user selects a facility
 
 NOTE: Some providers may not have location coordinates. These will still be displayed as text but won't appear on the map visualization.
 
@@ -637,7 +753,7 @@ TOOL USAGE NOTES:
 - Use client-side tools (getUserLocation, confirmSelection, showHospitalsOnMap) only when user interaction/visualization is needed.`;
 
 export async function POST(request: Request) {
-  const { messages, chatId }: { messages: UIMessage[]; chatId: string } = await request.json();
+  const { messages }: { messages: UIMessage[]; chatId?: string } = await request.json();
 
   const result = streamText({
     model: gateway('google/gemini-2.5-flash'),

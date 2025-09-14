@@ -28,6 +28,7 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { RoleSwitcher } from './role-switcher';
 
 interface UserProfile {
   email: string;
@@ -218,6 +219,9 @@ export function Navbar() {
                 <Menu className="h-5 w-5" />
               )}
             </Button>
+
+            {/* Role Switcher - only show if user is logged in */}
+            {user && <RoleSwitcher />}
 
             {/* User Menu */}
             {!isLoading && (

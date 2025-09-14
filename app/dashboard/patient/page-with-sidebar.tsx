@@ -273,15 +273,33 @@ export default function EnhancedPatientDashboard() {
       }
 
       const { data: profileData, error } = await supabase
-        .from("profiles")
+        .from("patient_profiles")
         .select("*")
         .eq("id", user.id)
         .single();
 
-      if (error) throw error;
-
-      if (profileData.role !== "patient") {
-        router.push("/dashboard/provider");
+      if (error) {
+        // Create patient profile if it doesn't exist
+        const { data: newProfile, error: createError } = await supabase
+          .from("patient_profiles")
+          .insert({
+            id: user.id,
+            full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || "Patient",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+        
+        if (createError) {
+          console.error("Error creating patient profile:", createError);
+          throw createError;
+        }
+        
+        setProfile({
+          ...newProfile,
+          email: user.email || "",
+        });
         return;
       }
 

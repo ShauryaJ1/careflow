@@ -637,7 +637,7 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
                                                   </Badge>
                                                   {hospital.wait_score && (
                                                     <Badge variant="secondary">
-                                                      Wait: {hospital.wait_score}/5
+                                                      Wait: {hospital.wait_score}
                                                     </Badge>
                                                   )}
                                                 </div>

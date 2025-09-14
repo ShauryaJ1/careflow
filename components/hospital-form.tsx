@@ -26,8 +26,15 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Loader2, Sparkles, Globe } from 'lucide-react';
+import { Loader2, Sparkles, Globe, MapPin } from 'lucide-react';
 import { getStateAbbreviation } from '@/lib/utils/states';
+import dynamic from 'next/dynamic';
+
+// Dynamic import for the heatmap to avoid SSR issues with Leaflet
+const RequestHeatmap = dynamic(() => import('@/components/request-heatmap'), {
+  ssr: false,
+  loading: () => <div className="h-[400px] bg-muted animate-pulse rounded-lg" />,
+});
 
 const hospitalFormSchema = z.object({
   name: z.string().min(1, 'Hospital name is required'),
@@ -65,6 +72,8 @@ interface HospitalFormProps {
 export function HospitalForm({ hospitalId, initialData, onSuccess }: HospitalFormProps) {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [websiteUrl, setWebsiteUrl] = useState('');
+  const [showHeatmap, setShowHeatmap] = useState(true);
+  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
   const utils = trpc.useUtils();
 
   const form = useForm<HospitalFormValues>({
@@ -170,15 +179,45 @@ export function HospitalForm({ hospitalId, initialData, onSuccess }: HospitalFor
   const daysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
 
   return (
-    <Card className="w-full max-w-4xl mx-auto">
-      <CardHeader>
-        <CardTitle>{hospitalId ? 'Edit Hospital' : 'Add New Hospital'}</CardTitle>
-        <CardDescription>
-          Enter hospital details or use AI to extract information from a website
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
+    <div className="space-y-6">
+      {/* Request Heatmap - Shows where patients are requesting care */}
+      {showHeatmap && !hospitalId && (
+        <RequestHeatmap
+          state={form.watch('state') || undefined}
+          city={form.watch('city') || undefined}
+          height="300px"
+          showControls={true}
+          onLocationSelect={(lat, lng) => {
+            setSelectedLocation({ lat, lng });
+            toast.info(`Selected location: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+          }}
+        />
+      )}
+      
+      <Card className="w-full max-w-4xl mx-auto">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>{hospitalId ? 'Edit Hospital' : 'Add New Hospital'}</CardTitle>
+              <CardDescription>
+                Enter hospital details or use AI to extract information from a website
+              </CardDescription>
+            </div>
+            {!hospitalId && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowHeatmap(!showHeatmap)}
+              >
+                <MapPin className="w-4 h-4 mr-2" />
+                {showHeatmap ? 'Hide' : 'Show'} Demand Map
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* AI Generation Section */}
             <div className="space-y-2 p-4 border rounded-lg bg-muted/50">
@@ -453,5 +492,6 @@ export function HospitalForm({ hospitalId, initialData, onSuccess }: HospitalFor
         </Form>
       </CardContent>
     </Card>
+    </div>
   );
 }
