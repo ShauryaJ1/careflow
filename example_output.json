@@ -1,0 +1,949 @@
+[
+    {
+      "type": "step-start"
+    },
+    {
+      "type": "tool-showHospitalsOnMap",
+      "toolCallId": "cVR7bwxlhr6d8IlP",
+      "state": "output-available",
+      "input": {
+        "query": "Virginia",
+        "filters": {
+          "state": "VA"
+        }
+      },
+      "output": {
+        "query": "Virginia",
+        "filters": {
+          "state": "VA"
+        },
+        "hospitals": [
+          {
+            "id": "60daed2a-8c10-423a-aa11-10fd4efa098d",
+            "name": "Popup",
+            "address": "23425 Bald Cypress Lane",
+            "city": "Aldie",
+            "state": "VA",
+            "zip_code": "20105",
+            "type_of_care": "clinic",
+            "wait_score": null,
+            "cooldown": null,
+            "op_22": null,
+            "website": "https://www.harristeeter.com/health/clinic/schedule-appointment",
+            "email": "jainshaurya094@gmail.com",
+            "phone_number": "9203722446",
+            "description": null,
+            "open_time": null,
+            "created_at": "2025-09-13T16:21:57.926341+00:00",
+            "updated_at": "2025-09-13T16:21:57.926341+00:00",
+            "start_at": "2025-09-13T16:21:57.775+00:00",
+            "end_at": null,
+            "location": null
+          },
+          {
+            "id": "ffe352db-413e-406c-873c-5cc8e15ef21b",
+            "name": "Inova Fairfax Hospital",
+            "address": "3300 Gallows Road",
+            "city": "Falls Church",
+            "state": "VA",
+            "zip_code": "22042",
+            "type_of_care": "ER",
+            "wait_score": 4.2,
+            "cooldown": 0.8,
+            "op_22": 45,
+            "website": "https://www.inova.org/locations/inova-fairfax-hospital",
+            "email": "info.fairfax@inova.org",
+            "phone_number": "703-776-4001",
+            "description": "Northern Virginia's premier healthcare facility offering comprehensive emergency and specialized care services.",
+            "open_time": {
+              "friday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "monday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "sunday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "tuesday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "saturday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "thursday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "wednesday": {
+                "open": "00:00",
+                "close": "23:59"
+              }
+            },
+            "created_at": "2025-09-13T16:50:31.867256+00:00",
+            "updated_at": "2025-09-13T16:50:31.867256+00:00",
+            "start_at": "2025-09-13T16:50:31.867256+00:00",
+            "end_at": null,
+            "location": "0101000020E6100000EC2FBB270F4B53C0A913D044D8704340"
+          },
+          {
+            "id": "d074491b-3ad0-4782-856c-0ffbcc8512e7",
+            "name": "Virginia Hospital Center",
+            "address": "1701 N George Mason Dr",
+            "city": "Arlington",
+            "state": "VA",
+            "zip_code": "22205",
+            "type_of_care": "ER",
+            "wait_score": 4.5,
+            "cooldown": 0.7,
+            "op_22": 38,
+            "website": "https://www.virginiahospitalcenter.com",
+            "email": "contact@vhc.com",
+            "phone_number": "703-558-5000",
+            "description": "Arlington's leading medical center providing emergency care and advanced medical services.",
+            "open_time": {
+              "friday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "monday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "sunday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "tuesday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "saturday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "thursday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "wednesday": {
+                "open": "00:00",
+                "close": "23:59"
+              }
+            },
+            "created_at": "2025-09-13T16:50:31.867256+00:00",
+            "updated_at": "2025-09-13T16:50:31.867256+00:00",
+            "start_at": "2025-09-13T16:50:31.867256+00:00",
+            "end_at": null,
+            "location": "0101000020E6100000ED9E3C2CD44653C0713D0AD7A3704340"
+          },
+          {
+            "id": "a0cb2805-dd6b-4f9c-9220-a3d6672b9724",
+            "name": "Inova Alexandria Hospital",
+            "address": "4320 Seminary Road",
+            "city": "Alexandria",
+            "state": "VA",
+            "zip_code": "22304",
+            "type_of_care": "ER",
+            "wait_score": 4,
+            "cooldown": 0.9,
+            "op_22": 52,
+            "website": "https://www.inova.org/locations/inova-alexandria-hospital",
+            "email": "info.alexandria@inova.org",
+            "phone_number": "703-504-3000",
+            "description": "Full-service community hospital serving Alexandria and surrounding areas with 24/7 emergency care.",
+            "open_time": {
+              "friday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "monday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "sunday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "tuesday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "saturday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "thursday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "wednesday": {
+                "open": "00:00",
+                "close": "23:59"
+              }
+            },
+            "created_at": "2025-09-13T16:50:31.867256+00:00",
+            "updated_at": "2025-09-13T16:50:31.867256+00:00",
+            "start_at": "2025-09-13T16:50:31.867256+00:00",
+            "end_at": null,
+            "location": "0101000020E6100000CC5D4BC8074953C061C3D32B65694340"
+          },
+          {
+            "id": "8205af44-f36f-4fe6-9f3d-75a29e890f5f",
+            "name": "MedStar Urgent Care - Arlington",
+            "address": "3801 Fairfax Dr",
+            "city": "Arlington",
+            "state": "VA",
+            "zip_code": "22203",
+            "type_of_care": "urgent_care",
+            "wait_score": 3.8,
+            "cooldown": 0.5,
+            "op_22": 25,
+            "website": "https://www.medstarhealth.org/locations/medstar-health-urgent-care-arlington",
+            "email": "urgentcare.arlington@medstar.net",
+            "phone_number": "703-717-9000",
+            "description": "Walk-in urgent care for non-life-threatening injuries and illnesses. No appointment needed.",
+            "open_time": {
+              "friday": {
+                "open": "08:00",
+                "close": "20:00"
+              },
+              "monday": {
+                "open": "08:00",
+                "close": "20:00"
+              },
+              "sunday": {
+                "open": "09:00",
+                "close": "17:00"
+              },
+              "tuesday": {
+                "open": "08:00",
+                "close": "20:00"
+              },
+              "saturday": {
+                "open": "09:00",
+                "close": "17:00"
+              },
+              "thursday": {
+                "open": "08:00",
+                "close": "20:00"
+              },
+              "wednesday": {
+                "open": "08:00",
+                "close": "20:00"
+              }
+            },
+            "created_at": "2025-09-13T16:50:31.867256+00:00",
+            "updated_at": "2025-09-13T16:50:31.867256+00:00",
+            "start_at": "2025-09-13T16:50:31.867256+00:00",
+            "end_at": null,
+            "location": "0101000020E6100000287E8CB96B4553C02C6519E2586F4340"
+          },
+          {
+            "id": "fc76f837-8084-4ac5-bc6c-84565a85b34f",
+            "name": "Patient First - Fair Oaks",
+            "address": "12585 Fair Lakes Circle",
+            "city": "Fairfax",
+            "state": "VA",
+            "zip_code": "22033",
+            "type_of_care": "urgent_care",
+            "wait_score": 3.5,
+            "cooldown": 0.6,
+            "op_22": 30,
+            "website": "https://www.patientfirst.com",
+            "email": "fairoaks@patientfirst.com",
+            "phone_number": "703-391-1250",
+            "description": "Primary and urgent care center open every day with extended hours. Walk-ins welcome.",
+            "open_time": {
+              "friday": {
+                "open": "08:00",
+                "close": "22:00"
+              },
+              "monday": {
+                "open": "08:00",
+                "close": "22:00"
+              },
+              "sunday": {
+                "open": "08:00",
+                "close": "22:00"
+              },
+              "tuesday": {
+                "open": "08:00",
+                "close": "22:00"
+              },
+              "saturday": {
+                "open": "08:00",
+                "close": "22:00"
+              },
+              "thursday": {
+                "open": "08:00",
+                "close": "22:00"
+              },
+              "wednesday": {
+                "open": "08:00",
+                "close": "22:00"
+              }
+            },
+            "created_at": "2025-09-13T16:50:31.867256+00:00",
+            "updated_at": "2025-09-13T16:50:31.867256+00:00",
+            "start_at": "2025-09-13T16:50:31.867256+00:00",
+            "end_at": null,
+            "location": "0101000020E6100000780B24287E5853C08E75711B0D704340"
+          },
+          {
+            "id": "b5f10128-8a8a-48df-879e-e117610d7ed2",
+            "name": "CVS MinuteClinic - Alexandria",
+            "address": "6811 Richmond Hwy",
+            "city": "Alexandria",
+            "state": "VA",
+            "zip_code": "22306",
+            "type_of_care": "urgent_care",
+            "wait_score": 2.8,
+            "cooldown": 0.4,
+            "op_22": 20,
+            "website": "https://www.cvs.com/minuteclinic",
+            "email": null,
+            "phone_number": "703-765-4902",
+            "description": "Walk-in clinic inside CVS for minor illnesses, injuries, and wellness services.",
+            "open_time": {
+              "friday": {
+                "open": "08:30",
+                "close": "19:30"
+              },
+              "monday": {
+                "open": "08:30",
+                "close": "19:30"
+              },
+              "sunday": {
+                "open": "10:00",
+                "close": "17:30"
+              },
+              "tuesday": {
+                "open": "08:30",
+                "close": "19:30"
+              },
+              "saturday": {
+                "open": "09:00",
+                "close": "17:30"
+              },
+              "thursday": {
+                "open": "08:30",
+                "close": "19:30"
+              },
+              "wednesday": {
+                "open": "08:30",
+                "close": "19:30"
+              }
+            },
+            "created_at": "2025-09-13T16:50:31.867256+00:00",
+            "updated_at": "2025-09-13T16:50:31.867256+00:00",
+            "start_at": "2025-09-13T16:50:31.867256+00:00",
+            "end_at": null,
+            "location": "0101000020E6100000598638D6C54953C02DB29DEFA75E4340"
+          },
+          {
+            "id": "1d499ef3-5747-4218-8a84-ae48a3770f31",
+            "name": "Arlington Free Clinic",
+            "address": "2921 11th St S",
+            "city": "Arlington",
+            "state": "VA",
+            "zip_code": "22204",
+            "type_of_care": "clinic",
+            "wait_score": 3.2,
+            "cooldown": 0.3,
+            "op_22": 15,
+            "website": "https://www.arlingtonfreeclinic.org",
+            "email": "info@arlingtonfreeclinic.org",
+            "phone_number": "703-979-1400",
+            "description": "Free medical care for uninsured Arlington County adults. By appointment only.",
+            "open_time": {
+              "friday": {
+                "open": "09:00",
+                "close": "17:00"
+              },
+              "monday": {
+                "open": "09:00",
+                "close": "21:00"
+              },
+              "sunday": {
+                "open": "closed",
+                "close": "closed"
+              },
+              "tuesday": {
+                "open": "09:00",
+                "close": "21:00"
+              },
+              "saturday": {
+                "open": "09:00",
+                "close": "13:00"
+              },
+              "thursday": {
+                "open": "09:00",
+                "close": "21:00"
+              },
+              "wednesday": {
+                "open": "09:00",
+                "close": "21:00"
+              }
+            },
+            "created_at": "2025-09-13T16:50:31.867256+00:00",
+            "updated_at": "2025-09-13T16:50:31.867256+00:00",
+            "start_at": "2025-09-13T16:50:31.867256+00:00",
+            "end_at": null,
+            "location": "0101000020E610000027A089B0E14553C007F01648506C4340"
+          },
+          {
+            "id": "61c39afc-bf01-4c15-962a-25e96bff90b2",
+            "name": "Neighborhood Health - Alexandria",
+            "address": "2 East Glebe Road",
+            "city": "Alexandria",
+            "state": "VA",
+            "zip_code": "22305",
+            "type_of_care": "clinic",
+            "wait_score": 3,
+            "cooldown": 0.4,
+            "op_22": 18,
+            "website": "https://www.neighborhoodhealthva.org",
+            "email": "alexandria@neighborhoodhealth.org",
+            "phone_number": "703-535-5568",
+            "description": "Community health center providing affordable primary care, dental, and behavioral health services.",
+            "open_time": {
+              "friday": {
+                "open": "08:00",
+                "close": "18:00"
+              },
+              "monday": {
+                "open": "08:00",
+                "close": "18:00"
+              },
+              "sunday": {
+                "open": "closed",
+                "close": "closed"
+              },
+              "tuesday": {
+                "open": "08:00",
+                "close": "18:00"
+              },
+              "saturday": {
+                "open": "closed",
+                "close": "closed"
+              },
+              "thursday": {
+                "open": "08:00",
+                "close": "18:00"
+              },
+              "wednesday": {
+                "open": "08:00",
+                "close": "18:00"
+              }
+            },
+            "created_at": "2025-09-13T16:50:31.867256+00:00",
+            "updated_at": "2025-09-13T16:50:31.867256+00:00",
+            "start_at": "2025-09-13T16:50:31.867256+00:00",
+            "end_at": null,
+            "location": "0101000020E610000070CE88D2DE4853C0984C158C4A6A4340"
+          },
+          {
+            "id": "d70b9277-f4a7-4911-842f-7700fcca0372",
+            "name": "Inova Cares Clinic - Fairfax",
+            "address": "8110 Gatehouse Rd",
+            "city": "Falls Church",
+            "state": "VA",
+            "zip_code": "22042",
+            "type_of_care": "clinic",
+            "wait_score": 2.5,
+            "cooldown": 0.5,
+            "op_22": 22,
+            "website": "https://www.inova.org/our-services/inova-cares-clinic",
+            "email": "inovacares@inova.org",
+            "phone_number": "703-698-2550",
+            "description": "Free clinic for uninsured adults in Fairfax County. Primary and specialty care available.",
+            "open_time": {
+              "friday": {
+                "open": "08:30",
+                "close": "16:30"
+              },
+              "monday": {
+                "open": "08:30",
+                "close": "16:30"
+              },
+              "sunday": {
+                "open": "closed",
+                "close": "closed"
+              },
+              "tuesday": {
+                "open": "08:30",
+                "close": "16:30"
+              },
+              "saturday": {
+                "open": "closed",
+                "close": "closed"
+              },
+              "thursday": {
+                "open": "08:30",
+                "close": "16:30"
+              },
+              "wednesday": {
+                "open": "08:30",
+                "close": "16:30"
+              }
+            },
+            "created_at": "2025-09-13T16:50:31.867256+00:00",
+            "updated_at": "2025-09-13T16:50:31.867256+00:00",
+            "start_at": "2025-09-13T16:50:31.867256+00:00",
+            "end_at": null,
+            "location": "0101000020E61000005F984C158C4E53C0CB10C7BAB8754340"
+          },
+          {
+            "id": "b2899179-0532-4c3d-ace5-d5c559b58cf9",
+            "name": "Mobile Health Unit - Fairfax County",
+            "address": "12000 Government Center Pkwy",
+            "city": "Fairfax",
+            "state": "VA",
+            "zip_code": "22035",
+            "type_of_care": "pop_up_clinic",
+            "wait_score": 2,
+            "cooldown": 0.3,
+            "op_22": 12,
+            "website": "https://www.fairfaxcounty.gov/health",
+            "email": "healthdept@fairfaxcounty.gov",
+            "phone_number": "703-246-2411",
+            "description": "Mobile clinic providing free health screenings and vaccinations. Check website for schedule and locations.",
+            "open_time": {
+              "friday": {
+                "open": "09:00",
+                "close": "15:00"
+              },
+              "monday": {
+                "open": "09:00",
+                "close": "15:00"
+              },
+              "sunday": {
+                "open": "closed",
+                "close": "closed"
+              },
+              "tuesday": {
+                "open": "closed",
+                "close": "closed"
+              },
+              "saturday": {
+                "open": "closed",
+                "close": "closed"
+              },
+              "thursday": {
+                "open": "closed",
+                "close": "closed"
+              },
+              "wednesday": {
+                "open": "09:00",
+                "close": "15:00"
+              }
+            },
+            "created_at": "2025-09-13T16:50:31.867256+00:00",
+            "updated_at": "2025-09-13T16:50:31.867256+00:00",
+            "start_at": "2025-09-13T16:50:31.867256+00:00",
+            "end_at": null,
+            "location": "0101000020E61000000C93A982515153C007F01648506C4340"
+          },
+          {
+            "id": "595d9c1d-566b-4388-8b2c-2ab69debade3",
+            "name": "Inova Virtual Health",
+            "address": "Online",
+            "city": "Fairfax",
+            "state": "VA",
+            "zip_code": "22030",
+            "type_of_care": "telehealth",
+            "wait_score": 1.5,
+            "cooldown": 0.1,
+            "op_22": 5,
+            "website": "https://www.inova.org/our-services/inova-virtual-health",
+            "email": "virtualhealth@inova.org",
+            "phone_number": "571-472-0750",
+            "description": "Virtual urgent care visits available 24/7. Video visits with board-certified providers.",
+            "open_time": {
+              "friday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "monday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "sunday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "tuesday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "saturday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "thursday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "wednesday": {
+                "open": "00:00",
+                "close": "23:59"
+              }
+            },
+            "created_at": "2025-09-13T16:50:31.867256+00:00",
+            "updated_at": "2025-09-13T16:50:31.867256+00:00",
+            "start_at": "2025-09-13T16:50:31.867256+00:00",
+            "end_at": null,
+            "location": "0101000020E61000000C93A982515153C007F01648506C4340"
+          },
+          {
+            "id": "1eff790d-1c1c-49c0-bbee-f6587ff65572",
+            "name": "Velocity Urgent Care - Woodbridge",
+            "address": "14904 Jefferson Davis Hwy",
+            "city": "Woodbridge",
+            "state": "VA",
+            "zip_code": "22191",
+            "type_of_care": "urgent_care",
+            "wait_score": 3.3,
+            "cooldown": 0.5,
+            "op_22": 28,
+            "website": "https://www.velocityuc.com",
+            "email": "woodbridge@velocityuc.com",
+            "phone_number": "703-492-2255",
+            "description": "Fast, friendly urgent care with online check-in available. X-ray and lab services on-site.",
+            "open_time": {
+              "friday": {
+                "open": "08:00",
+                "close": "20:00"
+              },
+              "monday": {
+                "open": "08:00",
+                "close": "20:00"
+              },
+              "sunday": {
+                "open": "09:00",
+                "close": "19:00"
+              },
+              "tuesday": {
+                "open": "08:00",
+                "close": "20:00"
+              },
+              "saturday": {
+                "open": "09:00",
+                "close": "19:00"
+              },
+              "thursday": {
+                "open": "08:00",
+                "close": "20:00"
+              },
+              "wednesday": {
+                "open": "08:00",
+                "close": "20:00"
+              }
+            },
+            "created_at": "2025-09-13T16:50:31.867256+00:00",
+            "updated_at": "2025-09-13T16:50:31.867256+00:00",
+            "start_at": "2025-09-13T16:50:31.867256+00:00",
+            "end_at": null,
+            "location": "0101000020E61000007DD0B359F55153C0B1BFEC9E3C544340"
+          },
+          {
+            "id": "1e5c7518-4b07-4eac-ace8-0599c6f66482",
+            "name": "GoHealth Urgent Care - McLean",
+            "address": "6862 Elm Street",
+            "city": "McLean",
+            "state": "VA",
+            "zip_code": "22101",
+            "type_of_care": "urgent_care",
+            "wait_score": 3.6,
+            "cooldown": 0.4,
+            "op_22": 24,
+            "website": "https://www.gohealthuc.com",
+            "email": "mclean@gohealthuc.com",
+            "phone_number": "703-734-3700",
+            "description": "Modern urgent care center with virtual check-in. Partner with local health systems for continuity of care.",
+            "open_time": {
+              "friday": {
+                "open": "08:00",
+                "close": "20:00"
+              },
+              "monday": {
+                "open": "08:00",
+                "close": "20:00"
+              },
+              "sunday": {
+                "open": "08:00",
+                "close": "20:00"
+              },
+              "tuesday": {
+                "open": "08:00",
+                "close": "20:00"
+              },
+              "saturday": {
+                "open": "08:00",
+                "close": "20:00"
+              },
+              "thursday": {
+                "open": "08:00",
+                "close": "20:00"
+              },
+              "wednesday": {
+                "open": "08:00",
+                "close": "20:00"
+              }
+            },
+            "created_at": "2025-09-13T16:50:31.867256+00:00",
+            "updated_at": "2025-09-13T16:50:31.867256+00:00",
+            "start_at": "2025-09-13T16:50:31.867256+00:00",
+            "end_at": null,
+            "location": "0101000020E6100000C442AD69DE4D53C04703780B24784340"
+          },
+          {
+            "id": "f23dca2d-1d51-46db-ad1e-167eee14fc67",
+            "name": "Capital Area Pediatrics - Reston",
+            "address": "1850 Town Center Pkwy",
+            "city": "Reston",
+            "state": "VA",
+            "zip_code": "20190",
+            "type_of_care": "practitioner",
+            "wait_score": 2.8,
+            "cooldown": 0.3,
+            "op_22": 15,
+            "website": "https://www.capitalareaped.com",
+            "email": "reston@capitalareaped.com",
+            "phone_number": "703-435-1300",
+            "description": "Pediatric practice offering same-day sick visits and comprehensive child healthcare.",
+            "open_time": {
+              "friday": {
+                "open": "08:00",
+                "close": "17:00"
+              },
+              "monday": {
+                "open": "08:00",
+                "close": "17:00"
+              },
+              "sunday": {
+                "open": "closed",
+                "close": "closed"
+              },
+              "tuesday": {
+                "open": "08:00",
+                "close": "17:00"
+              },
+              "saturday": {
+                "open": "09:00",
+                "close": "12:00"
+              },
+              "thursday": {
+                "open": "08:00",
+                "close": "17:00"
+              },
+              "wednesday": {
+                "open": "08:00",
+                "close": "17:00"
+              }
+            },
+            "created_at": "2025-09-13T16:50:31.867256+00:00",
+            "updated_at": "2025-09-13T16:50:31.867256+00:00",
+            "start_at": "2025-09-13T16:50:31.867256+00:00",
+            "end_at": null,
+            "location": "0101000020E6100000E10B93A9825553C009F9A067B37A4340"
+          },
+          {
+            "id": "0c368df0-6751-4025-9444-a1342cb03396",
+            "name": "Inova Loudoun Hospital",
+            "address": "44045 Riverside Pkwy",
+            "city": "Leesburg",
+            "state": "VA",
+            "zip_code": "20176",
+            "type_of_care": "ER",
+            "wait_score": 4.1,
+            "cooldown": 0.8,
+            "op_22": 42,
+            "website": "https://www.inova.org/locations/inova-loudoun-hospital",
+            "email": "info.loudoun@inova.org",
+            "phone_number": "703-858-6000",
+            "description": "State-of-the-art hospital serving Loudoun County with comprehensive emergency and specialty services.",
+            "open_time": {
+              "friday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "monday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "sunday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "tuesday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "saturday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "thursday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "wednesday": {
+                "open": "00:00",
+                "close": "23:59"
+              }
+            },
+            "created_at": "2025-09-13T16:50:31.867256+00:00",
+            "updated_at": "2025-09-13T16:50:31.867256+00:00",
+            "start_at": "2025-09-13T16:50:31.867256+00:00",
+            "end_at": null,
+            "location": "0101000020E6100000A301BC05126453C0D712F241CF8E4340"
+          },
+          {
+            "id": "0601f33f-6518-453e-bb74-d2452bd3a513",
+            "name": "Reston Hospital Center",
+            "address": "1850 Town Center Pkwy",
+            "city": "Reston",
+            "state": "VA",
+            "zip_code": "20190",
+            "type_of_care": "ER",
+            "wait_score": 3.9,
+            "cooldown": 0.9,
+            "op_22": 48,
+            "website": "https://www.restonhospital.com",
+            "email": "info@restonhospital.com",
+            "phone_number": "703-689-9000",
+            "description": "HCA Virginia hospital providing 24/7 emergency care and comprehensive medical services.",
+            "open_time": {
+              "friday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "monday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "sunday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "tuesday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "saturday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "thursday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "wednesday": {
+                "open": "00:00",
+                "close": "23:59"
+              }
+            },
+            "created_at": "2025-09-13T16:50:31.867256+00:00",
+            "updated_at": "2025-09-13T16:50:31.867256+00:00",
+            "start_at": "2025-09-13T16:50:31.867256+00:00",
+            "end_at": null,
+            "location": "0101000020E6100000E10B93A9825553C009F9A067B37A4340"
+          },
+          {
+            "id": "043c4486-eb98-4b5d-8bf6-99287a946712",
+            "name": "Sentara Northern Virginia Medical Center",
+            "address": "2300 Opitz Blvd",
+            "city": "Woodbridge",
+            "state": "VA",
+            "zip_code": "22191",
+            "type_of_care": "ER",
+            "wait_score": 3.7,
+            "cooldown": 1,
+            "op_22": 55,
+            "website": "https://www.sentara.com/northern-virginia",
+            "email": "nova@sentara.com",
+            "phone_number": "703-523-1000",
+            "description": "Full-service medical center with Level III Trauma Center and comprehensive emergency services.",
+            "open_time": {
+              "friday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "monday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "sunday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "tuesday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "saturday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "thursday": {
+                "open": "00:00",
+                "close": "23:59"
+              },
+              "wednesday": {
+                "open": "00:00",
+                "close": "23:59"
+              }
+            },
+            "created_at": "2025-09-13T16:50:31.867256+00:00",
+            "updated_at": "2025-09-13T16:50:31.867256+00:00",
+            "start_at": "2025-09-13T16:50:31.867256+00:00",
+            "end_at": null,
+            "location": "0101000020E6100000462575029A5053C0FFB27BF2B0504340"
+          },
+          {
+            "id": "5363192c-b885-4637-9fbd-fe4f5fec929c",
+            "name": "HCA Virginia",
+            "address": "1401 Johnston Willis Dr  ",
+            "city": "Richmond",
+            "state": "VA",
+            "zip_code": "23235",
+            "type_of_care": "clinic",
+            "wait_score": null,
+            "cooldown": null,
+            "op_22": null,
+            "website": "https://www.hcavirginia.com/calendar/event-details/a0scw000000AdCzAAK",
+            "email": null,
+            "phone_number": null,
+            "description": "HCA Virginia is a healthcare organization that operates a Maternal Infant Unit for which prenatal tours are offered. These tours are targeted at expectant parents and families to familiarize them with the unit and services.",
+            "open_time": null,
+            "created_at": "2025-09-13T17:42:01.859713+00:00",
+            "updated_at": "2025-09-13T17:42:01.859713+00:00",
+            "start_at": "2025-09-13T17:42:01.765+00:00",
+            "end_at": null,
+            "location": null
+          }
+        ],
+        "totalFound": 19
+      },
+      "callProviderMetadata": {
+        "google": {
+          "thoughtSignature": "CjMBH8yFtrDfOQaQP4rv3Wx5rONRy10IS0ffXfWj/tqps3TnJgsU4e/f2aoSkpPsXo4V7JEKbQEfzIW2cOekwjaZgHroBaGEImCDv1H17tb+/g8Cua7eIltxmBvr1O4hX3nbzo7+Gdac9Rx7B1K8mDk3yS0nx7NmmxX+u+cjzP7zLsdSEvR7FO1iOS5ynsLG8URoEl6rL9RxKPsyHNMzbrNG/IsKaAEfzIW2S6SDzuDaWOLILUWu1sqV950jtX8jvph4/zRgi/xW6qUS0i4hQeJ4CX7y1CuAXizRLT6/l351+ya3e57s6m27CP+lYoT9WYoJIxfABtvnI17U9KSni1oBUU4rbxoL0cOarGedCqkBAR/MhbarmT82oMsVV30/kD2to10jsr9OdlRBKq7/PwWAJwyLoxgvLW9aSGdXh7o4ptoMOJ8qKJBRIshlHexSjOdQS3LwMIYlfBgLBDahexYrt7RF8tWXfyuI+1azZ+OVtjb36Vc+0ff+XiVp/rkXr1IDE8B1vmU7o7mxoMoSPJGAryRptSoeNxKX199UHxypdpAyQmp8T3JQrJNs+0iQJQ2ghFCAmiUU0AoiAR/Mhba3O1/KjiYvy9g3Z4Rxd1ohV1wkNICsFGfHBKGWhg=="
+        }
+      }
+    },
+    {
+      "type": "step-start"
+    },
+    {
+      "type": "text",
+      "text": "Here are some hospitals in Virginia:\n\n*   **Popup** (Aldie, VA) - Type: clinic\n*   **Inova Fairfax Hospital** (Falls Church, VA) - Type: ER\n*   **Virginia Hospital Center** (Arlington, VA) - Type: ER\n*   **Inova Alexandria Hospital** (Alexandria, VA) - Type: ER\n*   **MedStar Urgent Care - Arlington** (Arlington, VA) - Type: urgent_care\n*   **Patient First - Fair Oaks** (Fairfax, VA) - Type: urgent_care\n*   **CVS MinuteClinic - Alexandria** (Alexandria, VA) - Type: urgent_care\n*   **Arlington Free Clinic** (Arlington, VA) - Type: clinic\n*   **Neighborhood Health - Alexandria** (Alexandria, VA) - Type: clinic\n*   **Inova Cares Clinic - Fairfax** (Falls Church, VA) - Type: clinic\n*   **Mobile Health Unit - Fairfax County** (Fairfax, VA) - Type: pop_up_clinic\n*   **Inova Virtual Health** (Fairfax, VA) - Type: telehealth\n*   **Velocity Urgent Care - Woodbridge** (Woodbridge, VA) - Type: urgent_care\n*   **GoHealth Urgent Care - McLean** (McLean, VA) - Type: urgent_care\n*   **Capital Area Pediatrics - Reston** (Reston, VA) - Type: practitioner\n*   **Inova Loudoun Hospital** (Leesburg, VA) - Type: ER\n*   **Reston Hospital Center** (Reston, VA) - Type: ER\n*   **Sentara Northern Virginia Medical Center** (Woodbridge, VA) - Type: ER\n*   **HCA Virginia** (Richmond, VA) - Type: clinic\n\nWould you like to narrow down the search by city, type of care, or your current location?\n",
+      "state": "done"
+    }
+  ]
