@@ -1,6 +1,6 @@
-# Careflow
+# Careflow 
 
-This project was created for HopHacks 2025.
+This project was created by Shaurya Jain, Avni Garg, Srinav Loka for HopHacks 2025.
 
 ## Inspiration
 The median emergency room wait time in the United States is 2 hours and 42 minutes, taking longer for less severe patients. According to a report by the Maryland Hospital Association, Maryland has some of the worst wait times across the country with the median exceeding 4 hours. At the same time, government cuts threaten to shut down many rural hospitals, hurting those most vulnerable in our community. Over 28 million Americans take more than half an hour just to reach the closest hospital. A third of Americans live in some sort of “healthcare-desert,” lacking access to either pharmacies, primary care, hospitals, hospital beds, trauma centers, or community health centers.
