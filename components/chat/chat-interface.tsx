@@ -53,16 +53,34 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
 
   // Save messages to database
   const saveMessageMutation = trpc.chat.messages.create.useMutation();
-  const [savedMessageIds, setSavedMessageIds] = useState<Set<string>>(new Set());
 
-  const { messages, sendMessage, addToolResult, isLoading } = useChat<ChatMessage>({
+  const { messages, sendMessage, addToolResult, status } = useChat<ChatMessage>({
     transport: new DefaultChatTransport({
       api: '/api/chat',
+      body: {
+        chatId,
+      },
     }),
-    body: {
-      chatId,
-    },
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
+    onFinish: ({ message }) => {
+      // Save completed assistant message to database (user messages are saved in handleSendMessage)
+      // onFinish in v5 receives an object with the message
+      if (message && message.role === 'assistant') {
+        saveMessageMutation.mutate({
+          chatId,
+          role: message.role as 'user' | 'assistant' | 'system' | 'tool',
+          parts: message.parts || [],
+          attachments: [],
+        }, {
+          onSuccess: () => {
+            console.log(`Saved assistant message to DB (id: ${message.id})`);
+          },
+          onError: (error) => {
+            console.error('Failed to save message:', error);
+          }
+        });
+      }
+    },
     async onToolCall({ toolCall }) {
       // Handle client-side tools
       if (toolCall.toolName === 'getUserLocation') {
@@ -75,67 +93,26 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
               };
               setUserLocation(location);
               addToolResult({
-                tool: 'getUserLocation',
                 toolCallId: toolCall.toolCallId,
-                output: location,
-              });
+                result: location,
+              } as any);
             },
             (error) => {
               addToolResult({
-                tool: 'getUserLocation',
                 toolCallId: toolCall.toolCallId,
-                output: { error: 'Unable to get location' },
-              });
+                result: { error: 'Unable to get location' },
+              } as any);
             }
           );
         } else {
           addToolResult({
-            tool: 'getUserLocation',
             toolCallId: toolCall.toolCallId,
-            output: { error: 'Geolocation not supported' },
-          });
+            result: { error: 'Geolocation not supported' },
+          } as any);
         }
       }
     },
   });
-
-  // Save messages to database
-  useEffect(() => {
-    const saveMessages = async () => {
-      for (const message of messages) {
-        // Skip if already saved
-        if (savedMessageIds.has(message.id)) continue;
-        
-        try {
-          // Build parts from message
-          let parts: any[] = [];
-          
-          if (message.parts) {
-            parts = message.parts;
-          } else if (message.content) {
-            parts = [{ type: 'text', text: message.content }];
-          }
-          
-          if (parts.length > 0) {
-            await saveMessageMutation.mutateAsync({
-              chatId,
-              role: message.role as 'user' | 'assistant' | 'system' | 'tool',
-              parts,
-              attachments: [],
-            });
-            setSavedMessageIds(prev => new Set([...prev, message.id]));
-            console.log('Saved message to DB:', message.id, message.role);
-          }
-        } catch (error) {
-          console.error('Failed to save message:', error);
-        }
-      }
-    };
-    
-    if (messages.length > savedMessageIds.size) {
-      saveMessages();
-    }
-  }, [messages, chatId, savedMessageIds.size, saveMessageMutation]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -176,8 +153,8 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
     return labels[type] || type;
   };
 
-  const getTypeOfCareColor = (type: string) => {
-    const colors: Record<string, string> = {
+  const getTypeOfCareColor = (type: string): "default" | "destructive" | "outline" | "secondary" => {
+    const colors: Record<string, "default" | "destructive" | "outline" | "secondary"> = {
       'ER': 'destructive',
       'urgent_care': 'default',
       'telehealth': 'secondary',
@@ -191,7 +168,25 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (input.trim()) {
-      sendMessage({ text: input });
+      const userMessage = input.trim();
+      
+      // Save user message to database
+      saveMessageMutation.mutate({
+        chatId,
+        role: 'user',
+        parts: [{ type: 'text', text: userMessage }],
+        attachments: [],
+      }, {
+        onSuccess: () => {
+          console.log('Saved user message to DB');
+        },
+        onError: (error) => {
+          console.error('Failed to save user message:', error);
+        }
+      });
+      
+      // Send message to AI
+      sendMessage({ text: userMessage });
       setInput('');
     }
   };
@@ -257,10 +252,9 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
                                     size="sm"
                                     onClick={() =>
                                       addToolResult({
-                                        tool: 'confirmSelection',
                                         toolCallId: part.toolCallId,
-                                        output: 'Confirmed',
-                                      })
+                                        result: 'Confirmed',
+                                      } as any)
                                     }
                                   >
                                     Confirm
@@ -270,10 +264,9 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
                                     variant="outline"
                                     onClick={() =>
                                       addToolResult({
-                                        tool: 'confirmSelection',
                                         toolCallId: part.toolCallId,
-                                        output: 'Cancelled',
-                                      })
+                                        result: 'Cancelled',
+                                      } as any)
                                     }
                                   >
                                     Cancel
@@ -309,10 +302,16 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
                         );
 
                       case 'tool-showHospitalsOnMap':
-                        if (part.state === 'output-available' && part.output) {
-                          const { hospitals, userLocation: mapUserLocation, query, totalFound } = part.output;
+                        if (part.state === 'output-available') {
+                          // Handle both part.output structure and direct properties
+                          const output = part.output || part;
+                          const hospitals = output.hospitals || [];
+                          const query = output.query || 'your location';
+                          const totalFound = output.totalFound || hospitals.length;
+                          const mapUserLocation = output.userLocation;
+                          
                           return (
-                            <Card key={part.toolCallId} className="overflow-hidden">
+                            <Card key={part.toolCallId || part.id} className="overflow-hidden">
                               <CardHeader className="pb-2">
                                 <CardTitle className="text-lg flex items-center gap-2">
                                   <Map className="h-5 w-5" />
@@ -325,7 +324,7 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
                               <CardContent className="p-0">
                                 <div className="h-[400px] w-full">
                                   <HospitalsMap
-                                    hospitals={hospitals}
+                                    hospitals={hospitals || []}
                                     selectedHospital={selectedHospital}
                                     userLocation={mapUserLocation || userLocation}
                                     onHospitalSelect={setSelectedHospital}
@@ -333,9 +332,10 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
                                 </div>
                                 
                                 {/* Hospital List */}
-                                <div className="p-4 max-h-[300px] overflow-y-auto">
-                                  <div className="space-y-2">
-                                    {hospitals.slice(0, 5).map((hospital: any) => (
+                                {hospitals && hospitals.length > 0 && (
+                                  <div className="p-4 max-h-[300px] overflow-y-auto">
+                                    <div className="space-y-2">
+                                      {hospitals.slice(0, 5).map((hospital: any) => (
                                       <div
                                         key={hospital.id}
                                         className={cn(
@@ -382,6 +382,7 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
                                     ))}
                                   </div>
                                 </div>
+                                )}
                               </CardContent>
                             </Card>
                           );
@@ -401,6 +402,82 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
                         // Handle other tool results
                         if (part.type?.startsWith('tool-')) {
                           if (part.state === 'output-available') {
+                            // Check if this is the hospitals map tool by examining the output
+                            if (part.output?.hospitals && Array.isArray(part.output.hospitals)) {
+                              const { hospitals, query, totalFound } = part.output;
+                              return (
+                                <Card key={part.toolCallId} className="overflow-hidden">
+                                  <CardHeader className="pb-2">
+                                    <CardTitle className="text-lg flex items-center gap-2">
+                                      <Map className="h-5 w-5" />
+                                      Medical Facilities {query ? `Near: ${query}` : 'Found'}
+                                    </CardTitle>
+                                    <p className="text-sm text-muted-foreground">
+                                      Found {totalFound || hospitals.length} facilities
+                                    </p>
+                                  </CardHeader>
+                                  <CardContent className="p-0">
+                                    <div className="h-[400px] w-full">
+                                      <HospitalsMap
+                                        hospitals={hospitals}
+                                        selectedHospital={selectedHospital}
+                                        userLocation={userLocation}
+                                        onHospitalSelect={setSelectedHospital}
+                                      />
+                                    </div>
+                                    
+                                    {/* Hospital List */}
+                                    {hospitals.length > 0 && (
+                                      <div className="p-4 max-h-[300px] overflow-y-auto">
+                                        <div className="space-y-2">
+                                          {hospitals.slice(0, 5).map((hospital: any) => (
+                                          <div
+                                            key={hospital.id}
+                                            className={cn(
+                                              "p-3 rounded-lg border cursor-pointer transition-colors",
+                                              selectedHospital?.id === hospital.id
+                                                ? "border-primary bg-primary/5"
+                                                : "hover:bg-muted/50"
+                                            )}
+                                            onClick={() => setSelectedHospital(hospital)}
+                                          >
+                                            <div className="flex justify-between items-start gap-2">
+                                              <div className="flex-1">
+                                                <h4 className="font-medium text-sm">{hospital.name}</h4>
+                                                <p className="text-xs text-muted-foreground mt-1">
+                                                  {hospital.address}, {hospital.city}, {hospital.state}
+                                                </p>
+                                                <div className="flex gap-2 mt-2">
+                                                  <Badge variant={getTypeOfCareColor(hospital.type_of_care)}>
+                                                    {getTypeOfCareLabel(hospital.type_of_care)}
+                                                  </Badge>
+                                                  {hospital.wait_score && (
+                                                    <Badge variant="secondary">
+                                                      Wait: {hospital.wait_score}/5
+                                                    </Badge>
+                                                  )}
+                                                </div>
+                                              </div>
+                                              {hospital.phone_number && (
+                                                <div className="text-right">
+                                                  <div className="flex items-center gap-1 text-primary">
+                                                    <Phone className="h-3 w-3" />
+                                                    <p className="text-xs">{hospital.phone_number}</p>
+                                                  </div>
+                                                </div>
+                                              )}
+                                            </div>
+                                          </div>
+                                        ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </CardContent>
+                                </Card>
+                              );
+                            }
+                            
+                            // Default fallback for other tools - show JSON
                             return (
                               <Card key={part.toolCallId} className="bg-blue-50 dark:bg-blue-950/20">
                                 <CardContent className="p-3">
@@ -436,7 +513,7 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
             </div>
           ))}
 
-          {isLoading && (
+          {(status as any) === 'in_progress' && (
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                 <Bot className="h-4 w-4 text-primary" />
@@ -460,11 +537,11 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Describe your symptoms or ask for help..."
-          disabled={isLoading}
+          disabled={(status as any) === 'in_progress'}
           className="flex-1"
         />
-        <Button type="submit" disabled={isLoading || !input.trim()}>
-          {isLoading ? (
+        <Button type="submit" disabled={(status as any) === 'in_progress' || !input.trim()}>
+          {(status as any) === 'in_progress' ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
             <Send className="h-4 w-4" />
