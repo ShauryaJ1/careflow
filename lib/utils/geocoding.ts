@@ -180,10 +180,25 @@ export async function getHospitalCoordinates(
     return KNOWN_HOSPITAL_COORDINATES[hospitalName];
   }
   
-  // Otherwise, geocode the address
+  // Build best-effort query using available pieces
+  // Priority: full street address > name+city/state > ZIP only > city/state
+  const candidates: string[] = [];
   if (address && city && state) {
-    const fullAddress = buildAddressString(address, city, state, zipCode);
-    return await geocodeAddress(fullAddress);
+    candidates.push(buildAddressString(address, city, state, zipCode));
+  }
+  if (hospitalName && city && state) {
+    candidates.push([hospitalName, city, state, zipCode || ''].filter(Boolean).join(', '));
+  }
+  if (zipCode) {
+    candidates.push(String(zipCode));
+  }
+  if (city && state) {
+    candidates.push([city, state].join(', '));
+  }
+
+  for (const query of candidates) {
+    const res = await geocodeAddress(query);
+    if (res) return res;
   }
   
   return null;

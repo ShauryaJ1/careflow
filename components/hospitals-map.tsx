@@ -86,48 +86,31 @@ export default function HospitalsMap({
       
       for (const hospital of hospitals) {
         let coords: { lat: number; lng: number } | undefined = undefined;
-        
-        // First check if we have known coordinates
+
+        // 1) Pre-computed known coordinates
         if (KNOWN_HOSPITAL_COORDINATES[hospital.name]) {
           coords = KNOWN_HOSPITAL_COORDINATES[hospital.name];
-        } 
-        // Check if location exists and has proper structure
-        else if (hospital.location) {
-          // Handle PostGIS point format or other formats
-          if (typeof hospital.location === 'object') {
-            if ('coordinates' in hospital.location && Array.isArray(hospital.location.coordinates)) {
-              // PostGIS format: coordinates[0] is longitude, coordinates[1] is latitude
-              coords = {
-                lat: hospital.location.coordinates[1],
-                lng: hospital.location.coordinates[0]
-              };
-            } else if ('lat' in hospital.location && 'lng' in hospital.location) {
-              const loc = hospital.location as any;
-              if (typeof loc.lat === 'number' && typeof loc.lng === 'number') {
-                coords = {
-                  lat: loc.lat,
-                  lng: loc.lng
-                };
-              }
-            }
+        }
+
+        // 2) Try to read coordinates from the location field
+        if (!coords && hospital.location && typeof hospital.location === 'object') {
+          const loc: any = hospital.location;
+          if (Array.isArray(loc.coordinates)) {
+            coords = { lat: loc.coordinates[1], lng: loc.coordinates[0] };
+          } else if (typeof loc.lat === 'number' && typeof loc.lng === 'number') {
+            coords = { lat: loc.lat, lng: loc.lng };
           }
-        } 
-        // Try to geocode if we have address information (skip if service is slow/unavailable)
-        // Skip geocoding for telehealth services and services without proper addresses
-        else if (
-          hospital.type_of_care !== 'telehealth' && 
-          hospital.address && 
-          hospital.city && 
-          hospital.state &&
-          hospital.address !== 'Online' // Skip if it's an online/virtual address
-        ) {
+        }
+
+        // 3) Fallback geocoding when we still don't have coordinates
+        if (!coords && hospital.type_of_care !== 'telehealth' && hospital.address !== 'Online') {
           try {
             const geocoded = await getHospitalCoordinates(
               hospital.name,
-              hospital.address,
-              hospital.city,
-              hospital.state,
-              hospital.zip_code
+              hospital.address || undefined,
+              hospital.city || undefined,
+              hospital.state || undefined,
+              hospital.zip_code || undefined
             );
             if (geocoded) {
               coords = { lat: geocoded.lat, lng: geocoded.lng };
@@ -136,11 +119,8 @@ export default function HospitalsMap({
             console.log('Skipping geocoding for', hospital.name, '- service unavailable');
           }
         }
-        
-        processed.push({
-          ...hospital,
-          coords: coords
-        });
+
+        processed.push({ ...hospital, coords });
       }
       
       setHospitalsWithCoords(processed);

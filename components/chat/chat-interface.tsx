@@ -661,16 +661,22 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
                               );
                             }
                             
-                            // Default fallback for other tools - show JSON
-                            return (
-                              <Card key={part.toolCallId || `tool-json-${i}`} className="bg-blue-50 dark:bg-blue-950/20">
-                                <CardContent className="p-3">
-                                  <pre className="text-xs overflow-x-auto">
-                                    {JSON.stringify(part.output, null, 2)}
-                                  </pre>
-                                </CardContent>
-                              </Card>
-                            );
+                          return null;
+                          //   // Suppress UI for internal helper tools
+                          //   if (part.type === 'tool-to_lat_lng' || part.type === 'tool-getNeighboringZipcodes') {
+                          //     return null;
+                          //   }
+
+                          //   // Default fallback for other tools - show JSON
+                          //   return (
+                          //     <Card key={part.toolCallId || `tool-json-${i}`} className="bg-blue-50 dark:bg-blue-950/20">
+                          //       <CardContent className="p-3">
+                          //         <pre className="text-xs overflow-x-auto">
+                          //           {JSON.stringify(part.output, null, 2)}
+                          //         </pre>
+                          //       </CardContent>
+                          //     </Card>
+                          //   );
                           }
                           return (
                             <Card key={part.toolCallId || `tool-loading-${i}`}>
