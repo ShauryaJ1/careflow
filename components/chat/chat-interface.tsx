@@ -54,7 +54,7 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
   // Save messages to database
   const saveMessageMutation = trpc.chat.messages.create.useMutation();
 
-  const { messages, sendMessage, addToolResult, status } = useChat<ChatMessage>({
+  const { messages, sendMessage, addToolResult, status, setMessages } = useChat<ChatMessage>({
     transport: new DefaultChatTransport({
       api: '/api/chat',
       body: {
@@ -66,10 +66,24 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
       // Save completed assistant message to database (user messages are saved in handleSendMessage)
       // onFinish in v5 receives an object with the message
       if (message && message.role === 'assistant') {
+        // Ensure we save all parts including tool invocations
+        // Filter out step markers and keep only meaningful parts
+        const partsToSave = (message.parts || []).filter((part: any) => {
+          // Skip step markers
+          if (part.type === 'step-start' || part.type === 'step-finish') {
+            return false;
+          }
+          return true;
+        });
+        
+        // Log for debugging
+        console.log('Saving assistant message with', partsToSave.length, 'parts');
+        console.log('Parts structure:', JSON.stringify(partsToSave, null, 2));
+        
         saveMessageMutation.mutate({
           chatId,
           role: message.role as 'user' | 'assistant' | 'system' | 'tool',
-          parts: message.parts || [],
+          parts: partsToSave,
           attachments: [],
         }, {
           onSuccess: () => {
@@ -113,6 +127,17 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
       }
     },
   });
+
+  // Load initial messages when component mounts
+  useEffect(() => {
+    if (initialMessages && initialMessages.length > 0 && setMessages) {
+      console.log('Loading initial messages:', initialMessages);
+      console.log('First message parts:', initialMessages[0]?.parts);
+      
+      // Set the initial messages
+      setMessages(initialMessages as ChatMessage[]);
+    }
+  }, []); // Only run once on mount
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -230,7 +255,7 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
                               : 'bg-muted'
                           )}>
                             <CardContent className="p-3">
-                              <p className="text-sm whitespace-pre-wrap">{part.text}</p>
+                              <p className="text-sm whitespace-pre-wrap">{part.text || part.content || ''}</p>
                             </CardContent>
                           </Card>
                         );
@@ -302,11 +327,12 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
                         );
 
                       case 'tool-showHospitalsOnMap':
-                        if (part.state === 'output-available') {
+                        // Handle both fresh and loaded message structures
+                        if (part.state === 'output-available' || part.state === 'result' || part.output?.hospitals) {
                           // Handle both part.output structure and direct properties
-                          const output = part.output || part;
+                          const output = part.output || part.result || part;
                           const hospitals = output.hospitals || [];
-                          const query = output.query || 'your location';
+                          const query = output.query || output.input?.query || 'your location';
                           const totalFound = output.totalFound || hospitals.length;
                           const mapUserLocation = output.userLocation;
                           
@@ -398,6 +424,11 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
                           </Card>
                         );
 
+                      case 'step-start':
+                      case 'step-finish':
+                        // Don't render step markers
+                        return null;
+                      
                       default:
                         // Handle other tool results
                         if (part.type?.startsWith('tool-')) {
