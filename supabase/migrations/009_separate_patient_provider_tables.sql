@@ -183,16 +183,22 @@ CREATE TRIGGER on_auth_user_created
 ALTER TABLE patient_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE provider_profiles ENABLE ROW LEVEL SECURITY;
 
--- Patients can view and update their own profile
+-- Patients can view, create and update their own profile
 CREATE POLICY "Users can view own patient profile" ON patient_profiles
     FOR SELECT USING (auth.uid() = id);
+
+CREATE POLICY "Users can create own patient profile" ON patient_profiles
+    FOR INSERT WITH CHECK (auth.uid() = id);
 
 CREATE POLICY "Users can update own patient profile" ON patient_profiles
     FOR UPDATE USING (auth.uid() = id);
 
--- Providers can view and update their own profile
+-- Providers can view, create and update their own profile
 CREATE POLICY "Users can view own provider profile" ON provider_profiles
     FOR SELECT USING (auth.uid() = id);
+
+CREATE POLICY "Users can create own provider profile" ON provider_profiles
+    FOR INSERT WITH CHECK (auth.uid() = id);
 
 CREATE POLICY "Users can update own provider profile" ON provider_profiles
     FOR UPDATE USING (auth.uid() = id);

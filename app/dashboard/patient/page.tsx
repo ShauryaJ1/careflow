@@ -96,18 +96,28 @@ export default function PatientDashboard() {
         .single();
 
       if (error) {
-        // User might be a provider, redirect them
-        const { data: providerProfile } = await supabase
-          .from("provider_profiles")
-          .select("id")
-          .eq("id", user.id)
+        // Create patient profile if it doesn't exist
+        const { data: newProfile, error: createError } = await supabase
+          .from("patient_profiles")
+          .insert({
+            id: user.id,
+            full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || "Patient",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .select()
           .single();
         
-        if (providerProfile) {
-          router.push("/dashboard/provider");
-          return;
+        if (createError) {
+          console.error("Error creating patient profile:", createError);
+          throw createError;
         }
-        throw error;
+        
+        setProfile({
+          ...newProfile,
+          email: user.email || "",
+        });
+        return;
       }
 
       setProfile({

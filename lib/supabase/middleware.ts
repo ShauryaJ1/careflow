@@ -52,34 +52,36 @@ export async function updateSession(request: NextRequest) {
   const isPublicRoute = publicRoutes.some(route => request.nextUrl.pathname === route || request.nextUrl.pathname.startsWith(`${route}/`));
   
   if (!user && !isPublicRoute) {
-    // no user, redirect to login page
+    // no user, redirect to unified login page
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    url.pathname = "/login/unified";
     return NextResponse.redirect(url);
   }
   
-  // Redirect logged-in users trying to access login pages to their appropriate dashboard
-  if (user && request.nextUrl.pathname.startsWith("/login")) {
+  // Redirect logged-in users trying to access login pages to their dashboard
+  if (user && (request.nextUrl.pathname === "/login" || request.nextUrl.pathname.startsWith("/login/"))) {
     const url = request.nextUrl.clone();
-    // Get user profile to determine role
-    // Check patient_profiles first
-    const { data: patientProfile } = await supabase
-      .from("patient_profiles")
-      .select("id")
-      .eq("id", user.sub)
-      .single();
     
-    if (patientProfile) {
+    // Check what profiles the user has
+    const [{ data: patientProfile }, { data: providerProfile }] = await Promise.all([
+      supabase.from("patient_profiles").select("id").eq("id", user.sub).single(),
+      supabase.from("provider_profiles").select("id").eq("id", user.sub).single()
+    ]);
+    
+    // If user has no profiles, create a patient profile by default
+    if (!patientProfile && !providerProfile) {
+      await supabase.from("patient_profiles").insert({
+        id: user.sub,
+        full_name: user.email?.split('@')[0] || "User",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+      url.pathname = "/dashboard/patient";
+    } else if (patientProfile) {
+      // Default to patient dashboard if they have that profile
       url.pathname = "/dashboard/patient";
     } else {
-      // Check provider_profiles
-      const { data: providerProfile } = await supabase
-        .from("provider_profiles")
-        .select("id")
-        .eq("id", user.sub)
-        .single();
-      
-      url.pathname = providerProfile ? "/dashboard/provider" : "/dashboard/patient";
+      url.pathname = "/dashboard/provider";
     }
     
     return NextResponse.redirect(url);

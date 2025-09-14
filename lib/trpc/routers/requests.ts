@@ -350,6 +350,154 @@ export const requestsRouter = createTRPCRouter({
     }),
 
   /**
+   * Log a patient location request (for chat agent)
+   * This creates a simple location-based request entry for heatmap visualization
+   */
+  logLocationRequest: protectedProcedure
+    .input(z.object({
+      reason: z.string(),
+      typeOfCare: z.enum(['ER', 'urgent_care', 'telehealth', 'clinic', 'pop_up_clinic', 'practitioner']),
+      address: z.string().optional(),
+      city: z.string().optional(),
+      state: z.string().length(2).optional(),
+      zipCode: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { supabase, user } = ctx;
+      
+      // Validate that at least one location field is provided
+      if (!input.address && !input.city && !input.state && !input.zipCode) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'At least one location field is required'
+        });
+      }
+      
+      // Build address string for geocoding
+      const addressParts = [];
+      if (input.address) addressParts.push(input.address);
+      if (input.city) addressParts.push(input.city);
+      if (input.state) addressParts.push(input.state);
+      if (input.zipCode) addressParts.push(input.zipCode);
+      const fullAddress = addressParts.join(', ');
+      
+      let latitude = null;
+      let longitude = null;
+      
+      // Try to geocode the address
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/geocode`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ address: fullAddress })
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.lat && data.lng) {
+            latitude = data.lat;
+            longitude = data.lng;
+          }
+        }
+      } catch (error) {
+        console.log('Geocoding failed, storing without coordinates:', error);
+      }
+      
+      // Insert the request
+      const { data, error } = await supabase
+        .from('requests')
+        .insert({
+          user_id: user.id,
+          reason: input.reason,
+          type_of_care: input.typeOfCare,
+          address: input.address,
+          city: input.city,
+          state: input.state,
+          zip_code: input.zipCode,
+          latitude,
+          longitude,
+        })
+        .select()
+        .single();
+      
+      if (error) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to log location request',
+          cause: error
+        });
+      }
+      
+      return data;
+    }),
+
+  /**
+   * Get request heatmap data for providers
+   */
+  getRequestHeatmap: protectedProcedure
+    .input(z.object({
+      state: z.string().length(2).optional(),
+      city: z.string().optional(),
+      daysBack: z.number().int().positive().default(90),
+    }))
+    .query(async ({ ctx, input }) => {
+      const { supabase } = ctx;
+      
+      // Check if user is a provider
+      const { data: profile } = await supabase
+        .from('provider_profiles')
+        .select('id')
+        .eq('id', ctx.user.id)
+        .single();
+      
+      if (!profile) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'Only providers can access heatmap data'
+        });
+      }
+      
+      // Query the materialized view for aggregated data
+      let query = supabase
+        .from('request_heatmap')
+        .select('*')
+        .gte('week_start', new Date(Date.now() - input.daysBack * 24 * 60 * 60 * 1000).toISOString());
+      
+      if (input.state) {
+        query = query.eq('state', input.state);
+      }
+      if (input.city) {
+        query = query.eq('city', input.city);
+      }
+      
+      const { data, error } = await query;
+      
+      if (error) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to get heatmap data',
+          cause: error
+        });
+      }
+      
+      // Convert grid points to lat/lng for visualization
+      const heatmapData = (data || []).map((row: any) => {
+        // Parse the PostGIS point format
+        const coords = row.grid_point?.coordinates || [];
+        return {
+          lat: coords[1] || 0,
+          lng: coords[0] || 0,
+          intensity: row.request_count,
+          typeOfCare: row.type_of_care,
+          city: row.city,
+          state: row.state,
+        };
+      });
+      
+      return heatmapData;
+    }),
+
+  /**
    * Get request statistics for analytics
    */
   getStatistics: protectedProcedure

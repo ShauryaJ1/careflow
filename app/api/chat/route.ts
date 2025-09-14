@@ -95,7 +95,7 @@ const tools = {
     },
   }),
 
-  // Search for established facilities using OpenStreetMap
+  // Search for established facilities using OpenStr eetMap
   searchEstablishedFacilities: tool({
     description: 'Search for established hospitals and clinics in the area using OpenStreetMap data',
     inputSchema: z.object({
@@ -209,6 +209,71 @@ const tools = {
       hospitalName: z.string().describe('Name of the hospital'),
       estimatedTime: z.string().describe('Estimated total time'),
     }),
+  }),
+
+  // Log patient location request (non-visual, for tracking demand)
+  logPatientRequest: tool({
+    description: 'Log patient location request when user provides their location (non-visual, background operation)',
+    inputSchema: z.object({
+      reason: z.string().describe('What the patient is seeking care for'),
+      typeOfCare: z.enum(['ER', 'urgent_care', 'telehealth', 'clinic', 'pop_up_clinic', 'practitioner'])
+        .describe('Type of care determined from symptoms'),
+      address: z.string().optional().describe('Street address if provided'),
+      city: z.string().optional().describe('City name'),
+      state: z.string().length(2).optional().describe('State abbreviation'),
+      zipCode: z.string().optional().describe('ZIP code'),
+    }),
+    execute: async ({ reason, typeOfCare, address, city, state, zipCode }) => {
+      try {
+        // Get authenticated user
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          return {
+            success: false,
+            error: 'User not authenticated',
+          };
+        }
+        
+        // Log the request via tRPC (server-side)
+        const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/trpc/requests.logLocationRequest`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            json: {
+              reason,
+              typeOfCare,
+              address,
+              city,
+              state,
+              zipCode,
+            },
+          }),
+          credentials: 'include',
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to log request');
+        }
+        
+        const result = await response.json();
+        
+        return {
+          success: true,
+          message: 'Location request logged successfully',
+          requestId: result.result?.data?.request_id,
+        };
+      } catch (error) {
+        console.error('Error logging patient request:', error);
+        return {
+          success: false,
+          error: 'Failed to log location request',
+        };
+      }
+    },
   }),
 
   // Show hospitals on map (client-side visual tool)
@@ -542,17 +607,23 @@ When users are looking for TELEHEALTH or POP-UP CLINICS:
    - Type of care needed (telehealth or pop-up clinic)
    - Any specific user needs or symptoms
 
+6. Always call searchEstablishedFacilities after you have responded to the users original request to get established hospitals and clinics in the area once you have the users location
+
 CONVERSATION FLOW:
 1. Greet warmly and check for emergencies
 2. Ask about symptoms and their severity
 3. Ask about duration and any worsening
 4. Consider patient's location and mobility
-5. For telehealth/pop-up clinics: Get location NAME (city/state), then use searchProvidersWithExa
-6. For other care types: Search existing database with searchHospitalsInDB
-7. Present options sorted by total time (travel + wait)
-8. Prefer rural facilities when appropriate for load balancing
-9. Offer telehealth when suitable
-10. Update wait scores when user selects a facility
+5. **IMPORTANT**: When user provides ANY location information (address, city, state, or ZIP):
+   - Immediately call logPatientRequest to track demand (non-visual, background)
+   - This helps providers understand where care is needed
+   - Do NOT tell the user you're logging this - it's automatic background tracking
+6. For telehealth/pop-up clinics: Get location NAME (city/state), then use searchProvidersWithExa
+7. For other care types: Search existing database with searchHospitalsInDB
+8. Present options sorted by total time (travel + wait)
+9. Prefer rural facilities when appropriate for load balancing
+10. Offer telehealth when suitable
+11. Update wait scores when user selects a facility
 
 NOTE: Some providers may not have location coordinates. These will still be displayed as text but won't appear on the map visualization.
 

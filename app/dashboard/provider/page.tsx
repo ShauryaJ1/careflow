@@ -133,18 +133,39 @@ export default function ProviderDashboard() {
         .single();
 
       if (profileError) {
-        // User might be a patient, redirect them
-        const { data: patientProfile } = await supabase
-          .from("patient_profiles")
-          .select("id")
-          .eq("id", user.id)
+        // Create provider profile if it doesn't exist
+        const { data: newProfile, error: createError } = await supabase
+          .from("provider_profiles")
+          .insert({
+            id: user.id,
+            full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || "Provider",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .select()
           .single();
         
-        if (patientProfile) {
-          router.push("/dashboard/patient");
-          return;
+        if (createError) {
+          console.error("Error creating provider profile:", createError);
+          throw createError;
         }
-        throw profileError;
+        
+        setProfile({
+          ...newProfile,
+          email: user.email || "",
+          provider_name: newProfile.provider_name,
+          provider_type: newProfile.provider_type,
+          services: newProfile.services || [],
+          languages_spoken: newProfile.languages_spoken || [],
+          telehealth_available: newProfile.telehealth_available,
+          accepts_walk_ins: newProfile.accepts_walk_ins,
+          website: newProfile.website,
+          insurance_accepted: newProfile.insurance_accepted || [],
+          capacity: newProfile.capacity,
+          hours: newProfile.hours,
+          accessibility_features: newProfile.accessibility_features || [],
+        });
+        return;
       }
 
       // All provider data is now in provider_profiles table

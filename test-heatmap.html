@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Request Heatmap</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        #map { height: 600px; }
+        .info { padding: 10px; background: white; margin: 10px; }
+    </style>
+</head>
+<body>
+    <div class="info">
+        <h2>Test Request Heatmap - Maryland</h2>
+        <p>This tests if the circle visualization works with your data</p>
+    </div>
+    <div id="map"></div>
+    
+    <script>
+        // Your data from the tRPC response
+        const data = [
+            { "lat": 39.29, "lng": -76.61, "intensity": 3, "typeOfCare": "urgent_care", "city": "Baltimore", "state": "MD" },
+            { "lat": 38.97, "lng": -76.5, "intensity": 2, "typeOfCare": "ER", "city": "Annapolis", "state": "MD" },
+            { "lat": 39.08, "lng": -77.15, "intensity": 2, "typeOfCare": "clinic", "city": "Rockville", "state": "MD" },
+            { "lat": 39.64, "lng": -77.72, "intensity": 2, "typeOfCare": "ER", "city": "Hagerstown", "state": "MD" },
+            { "lat": 38.99, "lng": -77.03, "intensity": 2, "typeOfCare": "urgent_care", "city": "Silver Spring", "state": "MD" }
+        ];
+        
+        // Initialize map
+        const map = L.map('map').setView([39.0458, -76.6413], 8);
+        
+        // Add tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        
+        // Color mapping
+        const colors = {
+            'ER': '#ef4444',
+            'urgent_care': '#f59e0b',
+            'telehealth': '#3b82f6',
+            'clinic': '#10b981',
+            'pop_up_clinic': '#8b5cf6',
+            'practitioner': '#06b6d4'
+        };
+        
+        // Add circles for each data point
+        data.forEach(point => {
+            const radius = 1000 + (point.intensity * 2000); // 1km to 7km based on intensity
+            const color = colors[point.typeOfCare] || '#666';
+            
+            const circle = L.circle([point.lat, point.lng], {
+                radius: radius,
+                fillColor: color,
+                fillOpacity: 0.5,
+                color: color,
+                weight: 2,
+                opacity: 0.8
+            }).addTo(map);
+            
+            circle.bindPopup(`
+                <strong>${point.city}, ${point.state}</strong><br/>
+                Type: ${point.typeOfCare}<br/>
+                Intensity: ${point.intensity}
+            `);
+        });
+        
+        // Add a legend
+        const legend = L.control({position: 'bottomright'});
+        legend.onAdd = function(map) {
+            const div = L.DomUtil.create('div', 'info legend');
+            div.style.background = 'white';
+            div.style.padding = '10px';
+            div.innerHTML = '<h4>Care Types</h4>';
+            for (const [type, color] of Object.entries(colors)) {
+                div.innerHTML += `<div><span style="background:${color};width:20px;height:10px;display:inline-block;margin-right:5px;"></span>${type}</div>`;
+            }
+            return div;
+        };
+        legend.addTo(map);
+        
+        console.log('Map initialized with', data.length, 'circles');
+    </script>
+</body>
+</html>
