@@ -12,29 +12,29 @@ Our goal is to solve this issue by increasing accessibility and awareness of res
 ## What it does
 Careflow is a medical care routing application that helps patients find appropriate healthcare facilities based on their symptoms and location. 
 
-#### Patient Portal
+### Patient Portal
 Acting as an intelligent assistant, Careflow uses Gemini AI to assess user input and route them to the right level of care, emergency rooms for critical issues, urgent care for moderate conditions, and telehealth for minor concerns or if the nearest hospital is too far away. It is also able to use Exa to search for pop-up clinics in the area and telehealth options if recommended or desired.
 
 The set of Emergency Rooms is pre-populated with the Centers for Medicare & Medicaid Services (CMS) dataset. Additionally, Careflow integrates real-time facility data from Supabase with OpenStreetMap listings and uses Geoapify APIs to calculate travel times and distances. Careflow will pull data from its database and other known sources to provide the most accurate information to the patient. Additionally, if there do not exist hospitals in the area, it can expand its search to neighboring zipcodes with the ZIPCodeAPI.
 
 The application displays results on an interactive Leaflet map, ranking facilities by expected total time to admittance (travel plus estimated wait). This serves as a load-balancer for busy hospitals, redirecting traffic to other care providers. Users can search by location, filter by care type, and receive personalized, logistics-aware recommendations tailored to their medical needs.
 
-#### Provider Portal
+### Provider Portal
 Providers are able to submit clinics and hospitals to the database, especially when a new practice opens up that Careflow is not yet aware of. To aid in this process, they can submit a link which will be analyzed by AI to fill out the text fields to submit. This can then be double checked by the provider.
 
 In addition to this we show providers maps of user requests and what kinds of assistance they are looking for whether that’s pop-up vaccination clinics or better emergency care. This allows providers to choose the locations that will lead to the greatest impact.
 
 ## How we built it
-####Frontend
+### Frontend
  - **next.js, node.js, tailwindcss, shadcn**: Frontend was built using next.js
  - **leaflet.js**: Provide the maps to show hospital locations to patients and hotspots to providers
 
-####Backend
+### Backend
  - **Supabase**: Database
  - **Vercel**: Deployment
  - **Gemini 2.5 Flash**: LLM for chatbot to balance speed and accuracy. Hosted through Vercel AI Gateway + Vercel AI SDK
 
-####Third Party APIs
+### Third Party APIs
  - **CMS (Centers for Medicare & Medicaid Services)**: Government data on emergency room locations across the country and provides proxies for waittimes
  - **Geoapify**: Geocoding and routing. Help with plotting and finding travel time from location A to B.
  - **Openstreetmap Overpass API**: Get established hospitals, clinics, and practices in the area
