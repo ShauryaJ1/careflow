@@ -261,16 +261,26 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
                         );
 
                       case 'tool-confirmSelection':
+                        // Handle both args and input structures
+                        const confirmData = part.args || part.input || {};
+                        const hospitalName = confirmData.hospitalName || 'Selected facility';
+                        const estimatedTime = confirmData.estimatedTime || 'N/A';
+                        
+                        // Debug log for tool structure
+                        if (!part.args && !part.input) {
+                          console.log('confirmSelection tool part structure:', part);
+                        }
+                        
                         return (
-                          <Card key={part.toolCallId}>
+                          <Card key={part.toolCallId || `confirm-${i}`}>
                             <CardContent className="p-3">
                               <p className="text-sm mb-3">
-                                Confirm selection: <strong>{part.args.hospitalName}</strong>
+                                Confirm selection: <strong>{hospitalName}</strong>
                                 <br />
-                                Estimated time: {part.args.estimatedTime}
+                                Estimated time: {estimatedTime}
                               </p>
-                              {part.state === 'output-available' ? (
-                                <p className="text-sm text-muted-foreground">{part.output}</p>
+                              {part.state === 'output-available' || part.state === 'result' ? (
+                                <p className="text-sm text-muted-foreground">{part.output || part.result || 'Selection processed'}</p>
                               ) : (
                                 <div className="flex gap-2">
                                   <Button
@@ -303,9 +313,10 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
                         );
 
                       case 'tool-getUserLocation':
-                        if (part.state === 'output-available' && part.output?.lat) {
+                        const locationOutput = part.output || part.result;
+                        if ((part.state === 'output-available' || part.state === 'result') && locationOutput?.lat) {
                           return (
-                            <Card key={part.toolCallId} className="bg-green-50 dark:bg-green-950/20">
+                            <Card key={part.toolCallId || `location-${i}`} className="bg-green-50 dark:bg-green-950/20">
                               <CardContent className="p-3">
                                 <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-300">
                                   <Navigation className="h-4 w-4" />
@@ -316,7 +327,7 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
                           );
                         }
                         return (
-                          <Card key={part.toolCallId}>
+                          <Card key={part.toolCallId || `location-loading-${i}`}>
                             <CardContent className="p-3">
                               <div className="flex items-center gap-2 text-sm">
                                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -328,7 +339,7 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
 
                       case 'tool-showHospitalsOnMap':
                         // Handle both fresh and loaded message structures
-                        if (part.state === 'output-available' || part.state === 'result' || part.output?.hospitals) {
+                        if (part.state === 'output-available' || part.state === 'result' || part.output?.hospitals || part.result?.hospitals) {
                           // Handle both part.output structure and direct properties
                           const output = part.output || part.result || part;
                           const hospitals = output.hospitals || [];
@@ -336,8 +347,13 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
                           const totalFound = output.totalFound || hospitals.length;
                           const mapUserLocation = output.userLocation;
                           
+                          // Debug log for loaded messages
+                          if (!part.output && !part.result) {
+                            console.log('showHospitalsOnMap tool part structure:', part);
+                          }
+                          
                           return (
-                            <Card key={part.toolCallId || part.id} className="overflow-hidden">
+                            <Card key={part.toolCallId || `hospitals-${i}`} className="overflow-hidden">
                               <CardHeader className="pb-2">
                                 <CardTitle className="text-lg flex items-center gap-2">
                                   <Map className="h-5 w-5" />
@@ -414,7 +430,7 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
                           );
                         }
                         return (
-                          <Card key={part.toolCallId}>
+                          <Card key={part.toolCallId || `hospitals-loading-${i}`}>
                             <CardContent className="p-3">
                               <div className="flex items-center gap-2 text-sm">
                                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -437,7 +453,7 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
                             if (part.output?.hospitals && Array.isArray(part.output.hospitals)) {
                               const { hospitals, query, totalFound } = part.output;
                               return (
-                                <Card key={part.toolCallId} className="overflow-hidden">
+                                <Card key={part.toolCallId || `hospitals-fallback-${i}`} className="overflow-hidden">
                                   <CardHeader className="pb-2">
                                     <CardTitle className="text-lg flex items-center gap-2">
                                       <Map className="h-5 w-5" />
@@ -510,7 +526,7 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
                             
                             // Default fallback for other tools - show JSON
                             return (
-                              <Card key={part.toolCallId} className="bg-blue-50 dark:bg-blue-950/20">
+                              <Card key={part.toolCallId || `tool-json-${i}`} className="bg-blue-50 dark:bg-blue-950/20">
                                 <CardContent className="p-3">
                                   <pre className="text-xs overflow-x-auto">
                                     {JSON.stringify(part.output, null, 2)}
@@ -520,7 +536,7 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
                             );
                           }
                           return (
-                            <Card key={part.toolCallId}>
+                            <Card key={part.toolCallId || `tool-loading-${i}`}>
                               <CardContent className="p-3">
                                 <div className="flex items-center gap-2 text-sm">
                                   <Loader2 className="h-4 w-4 animate-spin" />
