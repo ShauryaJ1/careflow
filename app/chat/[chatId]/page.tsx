@@ -110,36 +110,42 @@ export default function ChatPage() {
   })) || [];
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
+    <div className="flex flex-col h-[calc(100vh-4rem)]"> {/* 4rem = navbar height */}
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/chat">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <MessageSquare className="h-6 w-6" />
-              {chat.title}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Started {new Date(chat.createdAt).toLocaleDateString()}
-            </p>
+      <div className="border-b bg-background px-4 py-4">
+        <div className="container mx-auto max-w-6xl flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link href="/chat">
+              <Button variant="ghost" size="icon">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </Link>
+            <div>
+              <h1 className="text-xl font-bold flex items-center gap-2">
+                <MessageSquare className="h-5 w-5" />
+                {chat.title}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Started {new Date(chat.createdAt).toLocaleDateString()}
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Chat Interface */}
-      <Card className="shadow-lg">
-        <CardContent className="p-6">
-          <ChatInterface 
-            chatId={chatId} 
-            initialMessages={initialMessages}
-          />
-        </CardContent>
-      </Card>
+      {/* Chat Interface - Takes remaining height */}
+      <div className="flex-1 overflow-hidden">
+        <div className="container mx-auto max-w-6xl h-full px-4 py-4">
+          <Card className="h-full shadow-lg">
+            <CardContent className="p-6 h-full">
+              <ChatInterface 
+                chatId={chatId} 
+                initialMessages={initialMessages}
+              />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

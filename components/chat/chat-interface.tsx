@@ -197,18 +197,18 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
   };
 
   return (
-    <div className="flex flex-col h-full max-h-[calc(100vh-8rem)]">
+    <div className="flex flex-col h-full">
       {/* Emergency Alert */}
-      <Alert className="mb-4 border-red-200 bg-red-50 dark:bg-red-950/20">
+      <Alert className="flex-shrink-0 mb-4 border-red-200 bg-red-50 dark:bg-red-950/20">
         <AlertCircle className="h-4 w-4 text-red-600" />
         <AlertDescription className="text-red-800 dark:text-red-200">
           <strong>If this is a medical emergency, call 911 immediately.</strong>
         </AlertDescription>
       </Alert>
 
-      {/* Messages Area */}
-      <ScrollArea ref={scrollAreaRef} className="flex-1 pr-4">
-        <div className="space-y-4 pb-4">
+      {/* Messages Area - Takes remaining space */}
+      <ScrollArea ref={scrollAreaRef} className="flex-1 overflow-y-auto">
+        <div className="space-y-4 pb-4 pr-4">
           {messages.map((message) => (
             <div key={message.id} className="space-y-2">
               <div className={cn(
@@ -455,7 +455,7 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
       </ScrollArea>
 
       {/* Input Area */}
-      <form onSubmit={handleSendMessage} className="mt-4 flex gap-2">
+      <form onSubmit={handleSendMessage} className="flex-shrink-0 mt-4 flex gap-2">
         <Input
           value={input}
           onChange={(e) => setInput(e.target.value)}

@@ -112,17 +112,21 @@ export default function HospitalsMap({
             }
           }
         } 
-        // Try to geocode if we have address information
+        // Try to geocode if we have address information (skip if service is slow/unavailable)
         else if (hospital.address && hospital.city && hospital.state) {
-          const geocoded = await getHospitalCoordinates(
-            hospital.name,
-            hospital.address,
-            hospital.city,
-            hospital.state,
-            hospital.zip_code
-          );
-          if (geocoded) {
-            coords = { lat: geocoded.lat, lng: geocoded.lng };
+          try {
+            const geocoded = await getHospitalCoordinates(
+              hospital.name,
+              hospital.address,
+              hospital.city,
+              hospital.state,
+              hospital.zip_code
+            );
+            if (geocoded) {
+              coords = { lat: geocoded.lat, lng: geocoded.lng };
+            }
+          } catch (error) {
+            console.log('Skipping geocoding for', hospital.name, '- service unavailable');
           }
         }
         

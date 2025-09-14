@@ -66,6 +66,10 @@ export async function geocodeAddress(address: string): Promise<GeocodingResult |
         if (!data.error) {
           return data;
         }
+      } else if (response.status === 503) {
+        // Geocoding service is unavailable, return null gracefully
+        console.log('Geocoding service unavailable, skipping geocoding');
+        return null;
       }
     }
     

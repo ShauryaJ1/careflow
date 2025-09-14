@@ -33,15 +33,41 @@ export async function POST(request: NextRequest) {
     
     const encodedAddress = encodeURIComponent(address.trim());
     
-    // Call Nominatim API from server (no CORS issues)
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodedAddress}&limit=1`,
-      {
-        headers: {
-          'User-Agent': 'CareFlow Healthcare App/1.0',
-        },
+    // Call Nominatim API from server with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+    
+    let response;
+    try {
+      response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodedAddress}&limit=1`,
+        {
+          headers: {
+            'User-Agent': 'CareFlow Healthcare App/1.0',
+          },
+          signal: controller.signal,
+        }
+      );
+    } catch (fetchError: any) {
+      clearTimeout(timeoutId);
+      
+      // If it's a timeout or connection error, return a graceful error
+      if (fetchError.name === 'AbortError' || fetchError.code === 'UND_ERR_CONNECT_TIMEOUT') {
+        console.log('Geocoding timeout - returning null coordinates');
+        return NextResponse.json(
+          { 
+            error: 'Geocoding service temporarily unavailable',
+            lat: null,
+            lng: null,
+            fallback: true 
+          },
+          { status: 503 }
+        );
       }
-    );
+      throw fetchError;
+    } finally {
+      clearTimeout(timeoutId);
+    }
     
     if (!response.ok) {
       console.error('Geocoding API error:', response.statusText);
