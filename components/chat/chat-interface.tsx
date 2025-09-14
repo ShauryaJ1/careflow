@@ -21,7 +21,8 @@ import {
   AlertCircle,
   Loader2,
   Navigation,
-  Map
+  Map,
+  ExternalLink
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { Hospital } from '@/lib/types/database';
@@ -330,6 +331,133 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
                               <div className="flex items-center gap-2 text-sm">
                                 <Loader2 className="h-4 w-4 animate-spin" />
                                 Getting your location...
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+
+                      case 'tool-searchProvidersWithExa':
+                        if (part.state === 'output-available' || part.state === 'result' || part.output || part.result) {
+                          const exaOutput = part.output || part.result || {};
+                          const { searchQuery, totalFound, providersAdded, providers, careType, error } = exaOutput;
+                          
+                          if (error) {
+                            return (
+                              <Card key={part.toolCallId || `exa-error-${i}`} className="border-red-200 bg-red-50 dark:bg-red-950/20">
+                                <CardContent className="p-3">
+                                  <div className="flex items-center gap-2 text-sm text-red-700 dark:text-red-300">
+                                    <AlertCircle className="h-4 w-4" />
+                                    Error searching for providers: {error}
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            );
+                          }
+                          
+                          return (
+                            <Card key={part.toolCallId || `exa-${i}`} className="overflow-hidden">
+                              <CardHeader className="pb-2">
+                                <CardTitle className="text-lg flex items-center gap-2">
+                                  <Globe className="h-5 w-5" />
+                                  {careType === 'telehealth' ? 'Telehealth Providers' : 'Pop-up Clinics'} Found
+                                </CardTitle>
+                                <p className="text-sm text-muted-foreground">
+                                  Found {totalFound} providers in your area
+                                </p>
+                              </CardHeader>
+                              <CardContent>
+                                {providers && providers.length > 0 ? (
+                                  <div className="space-y-3">
+                                    {providers.map((provider: any, idx: number) => (
+                                      <div
+                                        key={provider.id || idx}
+                                        className="group relative"
+                                      >
+                                        <a
+                                          href={provider.website && provider.website !== 'null' ? provider.website : '#'}
+                                          target={provider.website && provider.website !== 'null' ? '_blank' : undefined}
+                                          rel="noopener noreferrer"
+                                          className={provider.website && provider.website !== 'null' ? 'cursor-pointer' : 'cursor-default'}
+                                        >
+                                          <div className={cn(
+                                            "p-4 rounded-lg border transition-all",
+                                            provider.website && provider.website !== 'null' 
+                                              ? "hover:bg-muted/50 hover:border-primary/50 hover:shadow-sm" 
+                                              : "bg-muted/20"
+                                          )}>
+                                            <div className="flex justify-between items-start mb-2">
+                                              <div className="flex-1">
+                                                <h4 className="font-semibold text-sm flex items-center gap-2">
+                                                  {provider.name}
+                                                  {provider.website && provider.website !== 'null' && (
+                                                    <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                  )}
+                                                </h4>
+                                                {provider.website && provider.website !== 'null' && (
+                                                  <p className="text-xs text-blue-600 dark:text-blue-400 truncate max-w-[300px]">
+                                                    {provider.website}
+                                                  </p>
+                                                )}
+                                              </div>
+                                              <Badge variant={careType === 'telehealth' ? 'secondary' : 'default'} className="text-xs">
+                                                {careType === 'telehealth' ? 'Telehealth' : 'Pop-up'}
+                                              </Badge>
+                                            </div>
+                                            
+                                            {provider.description && provider.description !== 'null' && (
+                                              <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                                                {provider.description}
+                                              </p>
+                                            )}
+                                            
+                                            <div className="flex flex-wrap gap-3 text-xs">
+                                              {provider.address && provider.address !== 'null' && provider.address !== 'Online' && (
+                                                <div className="flex items-center gap-1">
+                                                  <MapPin className="h-3 w-3 text-muted-foreground" />
+                                                  <span className="text-muted-foreground">
+                                                    {provider.address}, {provider.city}, {provider.state}
+                                                  </span>
+                                                </div>
+                                              )}
+                                              
+                                              {provider.phone_number && provider.phone_number !== 'null' && (
+                                                <div className="flex items-center gap-1">
+                                                  <Phone className="h-3 w-3 text-muted-foreground" />
+                                                  <span className="text-muted-foreground">{provider.phone_number}</span>
+                                                </div>
+                                              )}
+                                              
+                                              {provider.wait_score && (
+                                                <div className="flex items-center gap-1">
+                                                  <Clock className="h-3 w-3 text-muted-foreground" />
+                                                  <span className="text-muted-foreground">~{provider.wait_score} min wait</span>
+                                                </div>
+                                              )}
+                                            </div>
+                                          </div>
+                                        </a>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-muted-foreground">No providers found.</p>
+                                )}
+                                
+                                <div className="mt-3 pt-3 border-t">
+                                  <p className="text-xs text-muted-foreground">
+                                    Search query: &quot;{searchQuery}&quot;
+                                  </p>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          );
+                        }
+                        return (
+                          <Card key={part.toolCallId || `exa-loading-${i}`}>
+                            <CardContent className="p-3">
+                              <div className="flex items-center gap-2 text-sm">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Searching for providers...
                               </div>
                             </CardContent>
                           </Card>
