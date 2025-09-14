@@ -7,7 +7,7 @@ import ChatInterface from '@/components/chat/chat-interface';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { 
   MessageSquare, 
@@ -214,7 +214,7 @@ export default function ChatPage() {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Chat not found</AlertTitle>
             <AlertDescription>
-              This chat doesn't exist or you don't have permission to view it.
+              This chat doesn&apos;t exist or you don&apos;t have permission to view it.
             </AlertDescription>
           </Alert>
         </div>
