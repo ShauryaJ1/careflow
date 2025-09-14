@@ -113,7 +113,14 @@ export default function HospitalsMap({
           }
         } 
         // Try to geocode if we have address information (skip if service is slow/unavailable)
-        else if (hospital.address && hospital.city && hospital.state) {
+        // Skip geocoding for telehealth services and services without proper addresses
+        else if (
+          hospital.type_of_care !== 'telehealth' && 
+          hospital.address && 
+          hospital.city && 
+          hospital.state &&
+          hospital.address !== 'Online' // Skip if it's an online/virtual address
+        ) {
           try {
             const geocoded = await getHospitalCoordinates(
               hospital.name,
