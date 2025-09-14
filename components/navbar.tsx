@@ -25,6 +25,7 @@ import {
   Settings,
   Menu,
   X,
+  MessageSquare,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -148,6 +149,12 @@ export function Navbar() {
       label: 'Find Hospitals',
       href: '/hospitals',
       icon: Hospital,
+      show: true,
+    },
+    {
+      label: 'Medical Assistant',
+      href: '/chat',
+      icon: MessageSquare,
       show: true,
     },
   ];

@@ -10,43 +10,63 @@ interface GeocodingResult {
 }
 
 /**
- * Convert an address to latitude/longitude coordinates using Nominatim
+ * Convert an address to latitude/longitude coordinates
+ * Uses server-side proxy to avoid CORS issues
  * @param address Full address string
  * @returns Coordinates or null if not found
  */
 export async function geocodeAddress(address: string): Promise<GeocodingResult | null> {
   try {
-    // Clean and encode the address
+    // Clean the address
     const cleanAddress = address.trim();
     if (!cleanAddress) return null;
     
-    const encodedAddress = encodeURIComponent(cleanAddress);
+    // Check if we're in browser or server environment
+    const isServer = typeof window === 'undefined';
     
-    // Use Nominatim API (free, no key required)
-    // Add a delay to respect rate limits (max 1 request per second)
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodedAddress}&limit=1`,
-      {
-        headers: {
-          'User-Agent': 'CareFlow Healthcare App', // Required by Nominatim
-        },
+    if (isServer) {
+      // Server-side: Direct call to Nominatim
+      const encodedAddress = encodeURIComponent(cleanAddress);
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodedAddress}&limit=1`,
+        {
+          headers: {
+            'User-Agent': 'CareFlow Healthcare App/1.0',
+          },
+        }
+      );
+      
+      if (!response.ok) {
+        console.error('Geocoding failed:', response.statusText);
+        return null;
       }
-    );
-    
-    if (!response.ok) {
-      console.error('Geocoding failed:', response.statusText);
-      return null;
-    }
-    
-    const data = await response.json();
-    
-    if (data && data.length > 0) {
-      const result = data[0];
-      return {
-        lat: parseFloat(result.lat),
-        lng: parseFloat(result.lon),
-        display_name: result.display_name,
-      };
+      
+      const data = await response.json();
+      
+      if (data && data.length > 0) {
+        const result = data[0];
+        return {
+          lat: parseFloat(result.lat),
+          lng: parseFloat(result.lon),
+          display_name: result.display_name,
+        };
+      }
+    } else {
+      // Client-side: Use our API route to avoid CORS
+      const response = await fetch('/api/geocode', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ address: cleanAddress }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (!data.error) {
+          return data;
+        }
+      }
     }
     
     return null;

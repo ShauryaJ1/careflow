@@ -9,6 +9,7 @@
   "dependencies": {
     "@ai-sdk/google": "^2.0.14",
     "@ai-sdk/openai": "^2.0.30",
+    "@ai-sdk/react": "^2.0.44",
     "@browserbasehq/stagehand": "^2.5.0",
     "@hookform/resolvers": "^5.2.1",
     "@radix-ui/react-alert-dialog": "^1.1.15",
@@ -50,6 +51,8 @@
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.62.0",
     "react-leaflet": "^5.0.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "sonner": "^2.0.7",
     "superjson": "^2.2.2",
     "tailwind-merge": "^3.3.0",
