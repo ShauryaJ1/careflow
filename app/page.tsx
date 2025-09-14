@@ -19,7 +19,6 @@ export default function Home() {
       <div className="border-b bg-destructive/5">
         <div className="container mx-auto px-4 py-3">
           <Alert variant="destructive" className="border-0 bg-transparent p-0">
-            <AlertTriangle className="h-5 w-5" />
             <AlertTitle className="sr-only">Emergency</AlertTitle>
             <AlertDescription className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
               <span>If this is a medical emergency, call 911 immediately.</span>
@@ -58,7 +57,7 @@ export default function Home() {
                 <Link href="/auth/sign-up">Create account</Link>
               </Button>
             </div>
-            <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="mt-6 flex items-center gap-3 text-sm text-muted-foreground">
               <Badge variant="secondary">Patients</Badge>
               <span>•</span>
               <Badge variant="outline">Providers</Badge>
