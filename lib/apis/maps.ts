@@ -63,10 +63,6 @@ async function geocodeIfNeeded(loc: LocationInput): Promise<Coordinates> {
     if (!GEOAPIFY_API_KEY) throw new Error('GEOAPIFY_API_KEY is required to geocode a string location');
     const url = new URL('https://api.geoapify.com/v1/geocode/search');
     url.searchParams.set('text', parsed);
-    // If looks like a US ZIP code, constrain to US for better accuracy
-    if (/^\d{5}$/.test(parsed)) {
-      url.searchParams.set('filter', 'countrycode:us');
-    }
     url.searchParams.set('limit', '1');
     url.searchParams.set('apiKey', GEOAPIFY_API_KEY);
     const res = await fetch(url.toString());
@@ -165,8 +161,9 @@ export async function how_far(args: {
   const profile = args.profile || 'driving';
   const a = await geocodeIfNeeded(from);
   const b = await geocodeIfNeeded(to);
+  const coordsInfo = `from=${a.lat},${a.lng} to=${b.lat},${b.lng} profile=${profile}`;
 
-  if (!GEOAPIFY_API_KEY) throw new Error('GEOAPIFY_API_KEY is not set');
+  if (!GEOAPIFY_API_KEY) throw new Error(`GEOAPIFY_API_KEY is not set (${coordsInfo})`);
 
   const modeMap: Record<'driving' | 'walking' | 'cycling', string> = {
     driving: 'drive',
@@ -176,18 +173,18 @@ export async function how_far(args: {
   const mode = modeMap[profile];
 
   const url = new URL('https://api.geoapify.com/v1/routing');
-  url.searchParams.set('waypoints', `${a.lng},${a.lat}|${b.lng},${b.lat}`);
+  url.searchParams.set('waypoints', `${a.lat},${a.lng}|${b.lat},${b.lng}`);
   url.searchParams.set('mode', mode);
   url.searchParams.set('apiKey', GEOAPIFY_API_KEY);
 
   const res = await fetch(url.toString());
-  if (!res.ok) throw new Error(`Geoapify routing failed: ${res.status} ${res.statusText}`);
+  if (!res.ok) throw new Error(`Geoapify routing failed: ${res.status} ${res.statusText} (${coordsInfo})`);
   const data = (await res.json()) as any;
 
   // Geoapify returns a FeatureCollection
   if (data?.error || data?.message || data?.statusCode) {
     const errMsg = typeof data?.message === 'string' ? data.message : JSON.stringify(data);
-    throw new Error(`Geoapify error: ${errMsg}`);
+    throw new Error(`Geoapify error: ${errMsg} (${coordsInfo})`);
   }
 
   const feature = data?.features?.[0];
@@ -198,7 +195,7 @@ export async function how_far(args: {
   const prefDist = props.distance ?? props.legs?.[0]?.distance ?? props.segments?.[0]?.distance;
 
   if (prefTime == null || prefDist == null) {
-    throw new Error('No route found (empty features or missing time/distance)');
+    throw new Error(`No route found (empty features or missing time/distance) (${coordsInfo})`);
   }
 
   const seconds = Number(prefTime) || 0;
@@ -235,7 +232,7 @@ export async function get_established(input: GetEstablishedInput): Promise<Estab
     headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
     body: new URLSearchParams({ data: q }).toString(),
   });
-  if (!res.ok) throw new Error(`Overpass API failed: ${res.status} ${res.statusText}`);
+  if (!res.ok) throw new Error(`Overpass API failed: ${res.status} ${res.statusText} (center=${lat},${lng} radiusMeters=${radiusMeters})`);
   const data = await res.json();
 
   const parsed = overpassResponseSchema.safeParse(data);

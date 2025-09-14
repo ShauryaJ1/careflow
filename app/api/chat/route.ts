@@ -11,11 +11,46 @@ import {
 } from 'ai';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
-import { get_established, how_far } from '@/lib/apis/maps';
+import { get_established, how_far, to_lat_lng } from '@/lib/apis/maps';
+import { get_neighboring_zipcodes } from '@/lib/apis/zipcodes';
 import Exa from 'exa-js';
 
 // Define tools for the assistant
 const tools = {
+  // Get neighboring ZIP codes within a radius
+  getNeighboringZipcodes: tool({
+    description: 'Return neighboring ZIP codes within a radius of a given ZIP',
+    inputSchema: z.object({
+      zip: z.string().regex(/^\d{5}$/,'ZIP must be a 5-digit US ZIP code'),
+      radius: z.number().positive().describe('Radius distance value'),
+      unit: z.enum(['mile', 'km']).optional().default('mile'),
+    }),
+    execute: async ({ zip, radius, unit }) => {
+      try {
+        const zipCodes = await get_neighboring_zipcodes({ zip, radius, unit });
+        return { zip, radius, unit: unit ?? 'mile', count: zipCodes.length, zipCodes };
+      } catch (error) {
+        console.error('getNeighboringZipcodes error:', error);
+        return { error: 'Failed to fetch neighboring ZIP codes. Ensure ZIPCODEAPI_KEY is set and inputs are valid.' };
+      }
+    },
+  }),
+  // Convert a free-form location into latitude/longitude
+  to_lat_lng: tool({
+    description: 'Convert any location (city, address, or 5-digit ZIP) to a { lat, lng } pair',
+    inputSchema: z.object({
+      location: z.string().min(1).describe('City, address, or 5-digit ZIP code'),
+    }),
+    execute: async ({ location }) => {
+      try {
+        const coords = await to_lat_lng(location);
+        return coords;
+      } catch (error) {
+        console.error('to_lat_lng error:', error);
+        return { error: 'Failed to geocode location. Ensure GEOAPIFY_API_KEY is set and input is valid.' };
+      }
+    },
+  }),
   // Search hospitals in database
   searchHospitalsInDB: tool({
     description: 'Search for hospitals, clinics, and medical facilities in our database',
@@ -124,30 +159,56 @@ const tools = {
 
   // Calculate travel time between two points
   calculateTravelTime: tool({
-    description: 'Calculate travel time and distance between two locations',
-    inputSchema: z.object({
-      fromLat: z.number().describe('Starting latitude'),
-      fromLng: z.number().describe('Starting longitude'),
-      toLat: z.number().describe('Destination latitude'),
-      toLng: z.number().describe('Destination longitude'),
-      mode: z.enum(['driving', 'walking', 'cycling']).optional().default('driving'),
-    }),
-    execute: async ({ fromLat, fromLng, toLat, toLng, mode }) => {
+    description: 'Calculate travel time and distance between two locations. Accepts either numeric coordinates or free-form from/to text.',
+    inputSchema: z
+      .object({
+        // Option A: numeric coordinates
+        fromLat: z.coerce.number().describe('Starting latitude').optional(),
+        fromLng: z.coerce.number().describe('Starting longitude').optional(),
+        toLat: z.coerce.number().describe('Destination latitude').optional(),
+        toLng: z.coerce.number().describe('Destination longitude').optional(),
+        // Option B: text locations (address/city/ZIP)
+        fromText: z.string().min(1).describe('Starting location (address, city, or ZIP)').optional(),
+        toText: z.string().min(1).describe('Destination (address, city, or ZIP)').optional(),
+        mode: z.enum(['driving', 'walking', 'cycling']).optional().default('driving'),
+      })
+      .describe('Provide either all of fromLat/fromLng/toLat/toLng or fromText/toText'),
+    execute: async (input: any) => {
       try {
-        const result = await how_far({
-          from: { lat: fromLat, lng: fromLng },
-          to: { lat: toLat, lng: toLng },
-          profile: mode,
-        });
+        const profile: 'driving' | 'walking' | 'cycling' = input.mode || 'driving';
+        let from: { lat: number; lng: number } | string | undefined;
+        let to: { lat: number; lng: number } | string | undefined;
+
+        const haveCoords =
+          input.fromLat != null && input.fromLng != null && input.toLat != null && input.toLng != null;
+        const haveText = input.fromText && input.toText;
+
+        if (haveCoords) {
+          from = { lat: Number(input.fromLat), lng: Number(input.fromLng) };
+          to = { lat: Number(input.toLat), lng: Number(input.toLng) };
+          const withinLat = (x: number) => x >= -90 && x <= 90;
+          const withinLng = (x: number) => x >= -180 && x <= 180;
+          if (!withinLat(from.lat) || !withinLng(from.lng) || !withinLat(to.lat) || !withinLng(to.lng)) {
+            return { error: 'Invalid coordinates. Lat must be [-90,90], Lng must be [-180,180].' };
+          }
+        } else if (haveText) {
+          from = String(input.fromText);
+          to = String(input.toText);
+        } else {
+          return { error: 'Provide either numeric coordinates (fromLat/fromLng/toLat/toLng) or text (fromText/toText).' };
+        }
+
+        const result = await how_far({ from: from!, to: to!, profile });
         
         return {
           minutes: Math.round(result.minutes),
           miles: Math.round(result.distanceMiles * 10) / 10,
-          mode,
+          mode: profile,
         };
       } catch (error) {
         console.error('Travel time calculation error:', error);
-        return { error: 'Failed to calculate travel time' };
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        return { error: `Failed to calculate travel time: ${message}` };
       }
     },
   }),
@@ -556,7 +617,24 @@ CONVERSATION FLOW:
 
 NOTE: Some providers may not have location coordinates. These will still be displayed as text but won't appear on the map visualization.
 
-Always be clear about your limitations and encourage professional medical consultation.`;
+Always be clear about your limitations and encourage professional medical consultation.
+
+AVAILABLE TOOLS:
+- searchHospitalsInDB: Search our Supabase hospitals table by city, state, typeOfCare, and optional user location (lat/lng + radius in miles). Returns up to 10 best options, sorted by total time when lat/lng provided.
+- searchEstablishedFacilities: Search established facilities via OpenStreetMap around a center {lat,lng} within radiusMeters.
+- calculateTravelTime: Compute travel time and distance between two points with a mode of driving, walking, or cycling. Remember to convert to lat-long before using this tool.
+- updateHospitalWaitScore: Increment a hospital's wait_score when a user indicates they are going there.
+- to_lat_lng: Convert any location string (city/address/5-digit ZIP) into coordinates { lat, lng } using Geoapify.
+- getNeighboringZipcodes: Given a 5-digit ZIP and radius (+ optional unit of 'mile' or 'km'), return nearby ZIP codes.
+- getUserLocation: Client-side tool to request the user's current location (must be triggered when appropriate).
+- confirmSelection: Client-side tool to ask the user to confirm a selected facility.
+- showHospitalsOnMap: Client-side visual tool to display hospitals on an interactive map.
+
+TOOL USAGE NOTES:
+- Prefer to_lat_lng first to normalize free-form locations or ZIP codes to coordinates before facility searches.
+- You may combine getNeighboringZipcodes with database searches to broaden coverage for a ZIP-based query if unabile to find nearby facilities.
+- Use calculateTravelTime to compare options by total time (travel + wait) when coordinates are known.
+- Use client-side tools (getUserLocation, confirmSelection, showHospitalsOnMap) only when user interaction/visualization is needed.`;
 
 export async function POST(request: Request) {
   const { messages, chatId }: { messages: UIMessage[]; chatId: string } = await request.json();
