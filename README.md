@@ -1,105 +1,68 @@
-<a href="https://demo-nextjs-with-supabase.vercel.app/">
-  <img alt="Next.js and Supabase Starter Kit - the fastest way to build apps with Next.js and Supabase" src="https://demo-nextjs-with-supabase.vercel.app/opengraph-image.png">
-  <h1 align="center">Next.js and Supabase Starter Kit</h1>
-</a>
+# Careflow
 
-<p align="center">
- The fastest way to build apps with Next.js and Supabase
-</p>
+This project was created for HopHacks 2025.
 
-<p align="center">
-  <a href="#features"><strong>Features</strong></a> ·
-  <a href="#demo"><strong>Demo</strong></a> ·
-  <a href="#deploy-to-vercel"><strong>Deploy to Vercel</strong></a> ·
-  <a href="#clone-and-run-locally"><strong>Clone and run locally</strong></a> ·
-  <a href="#feedback-and-issues"><strong>Feedback and issues</strong></a>
-  <a href="#more-supabase-examples"><strong>More Examples</strong></a>
-</p>
-<br/>
+## Inspiration
+The median emergency room wait time in the United States is 2 hours and 42 minutes, taking longer for less severe patients. According to a report by the Maryland Hospital Association, Maryland has some of the worst wait times across the country with the median exceeding 4 hours. At the same time, government cuts threaten to shut down many rural hospitals, hurting those most vulnerable in our community. Over 28 million Americans take more than half an hour just to reach the closest hospital. A third of Americans live in some sort of “healthcare-desert,” lacking access to either pharmacies, primary care, hospitals, hospital beds, trauma centers, or community health centers.
 
-## Features
+Part of the reason for such long wait times is lack of awareness of other options. Around 20% of ER visits could be avoided by visiting a PCP or Urgent Care instead. Telehealth visits are also a great choice for those 1 in 5 Americans living in rural areas where driving to a hospital may be too far.  Pop-up clinics during busy seasons can also help lower the strain on hospitals. 90% of health care clinic patients make less than double the federal poverty level.
 
-- Works across the entire [Next.js](https://nextjs.org) stack
-  - App Router
-  - Pages Router
-  - Middleware
-  - Client
-  - Server
-  - It just works!
-- supabase-ssr. A package to configure Supabase Auth to use cookies
-- Password-based authentication block installed via the [Supabase UI Library](https://supabase.com/ui/docs/nextjs/password-based-auth)
-- Styling with [Tailwind CSS](https://tailwindcss.com)
-- Components with [shadcn/ui](https://ui.shadcn.com/)
-- Optional deployment with [Supabase Vercel Integration and Vercel deploy](#deploy-your-own)
-  - Environment variables automatically assigned to Vercel project
+Our goal is to solve this issue by increasing accessibility and awareness of resources to the general public
 
-## Demo
+## What it does
+Careflow is a medical care routing application that helps patients find appropriate healthcare facilities based on their symptoms and location. 
 
-You can view a fully working demo at [demo-nextjs-with-supabase.vercel.app](https://demo-nextjs-with-supabase.vercel.app/).
+#### Patient Portal
+Acting as an intelligent assistant, Careflow uses Gemini AI to assess user input and route them to the right level of care, emergency rooms for critical issues, urgent care for moderate conditions, and telehealth for minor concerns or if the nearest hospital is too far away. It is also able to use Exa to search for pop-up clinics in the area and telehealth options if recommended or desired.
 
-## Deploy to Vercel
+The set of Emergency Rooms is pre-populated with the Centers for Medicare & Medicaid Services (CMS) dataset. Additionally, Careflow integrates real-time facility data from Supabase with OpenStreetMap listings and uses Geoapify APIs to calculate travel times and distances. Careflow will pull data from its database and other known sources to provide the most accurate information to the patient. Additionally, if there do not exist hospitals in the area, it can expand its search to neighboring zipcodes with the ZIPCodeAPI.
 
-Vercel deployment will guide you through creating a Supabase account and project.
+The application displays results on an interactive Leaflet map, ranking facilities by expected total time to admittance (travel plus estimated wait). This serves as a load-balancer for busy hospitals, redirecting traffic to other care providers. Users can search by location, filter by care type, and receive personalized, logistics-aware recommendations tailored to their medical needs.
 
-After installation of the Supabase integration, all relevant environment variables will be assigned to the project so the deployment is fully functioning.
+#### Provider Portal
+Providers are able to submit clinics and hospitals to the database, especially when a new practice opens up that Careflow is not yet aware of. To aid in this process, they can submit a link which will be analyzed by AI to fill out the text fields to submit. This can then be double checked by the provider.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&project-name=nextjs-with-supabase&repository-name=nextjs-with-supabase&demo-title=nextjs-with-supabase&demo-description=This+starter+configures+Supabase+Auth+to+use+cookies%2C+making+the+user%27s+session+available+throughout+the+entire+Next.js+app+-+Client+Components%2C+Server+Components%2C+Route+Handlers%2C+Server+Actions+and+Middleware.&demo-url=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2F&external-id=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&demo-image=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2Fopengraph-image.png)
+In addition to this we show providers maps of user requests and what kinds of assistance they are looking for whether that’s pop-up vaccination clinics or better emergency care. This allows providers to choose the locations that will lead to the greatest impact.
 
-The above will also clone the Starter kit to your GitHub, you can clone that locally and develop locally.
+## How we built it
+####Frontend
+ - **next.js, node.js, tailwindcss, shadcn**: Frontend was built using next.js
+ - **leaflet.js**: Provide the maps to show hospital locations to patients and hotspots to providers
 
-If you wish to just develop locally and not deploy to Vercel, [follow the steps below](#clone-and-run-locally).
+####Backend
+ - **Supabase**: Database
+ - **Vercel**: Deployment
+ - **Gemini 2.5 Flash**: LLM for chatbot to balance speed and accuracy. Hosted through Vercel AI Gateway + Vercel AI SDK
 
-## Clone and run locally
+####Third Party APIs
+ - **CMS (Centers for Medicare & Medicaid Services)**: Government data on emergency room locations across the country and provides proxies for waittimes
+ - **Geoapify**: Geocoding and routing. Help with plotting and finding travel time from location A to B.
+ - **Openstreetmap Overpass API**: Get established hospitals, clinics, and practices in the area
+ - **ZIPCodeAPI**: Get neighboring zipcodes within a certain radius of your zipcode
+ - **Exa**: Allow LLMs to perform an enhanced web search. Integrated with Gemini 2.5 Flash.
 
-1. You'll first need a Supabase project which can be made [via the Supabase dashboard](https://database.new)
+We also took the help from generative AI tools such as Cursor, Claude Code, and Codex to improve our own efficiency.
 
-2. Create a Next.js app using the Supabase Starter template npx command
+## Challenges we ran into
+One of the biggest challenges was streaming some of our large visual interfaces for our Vercel AI SDK chatbot. One of our most significant features is our Leaflet JS map that shows healthcare providers, which we were able to engineer in a way that it seamlessly blends with the chat and SQL queries to Supabase.
 
-   ```bash
-   npx create-next-app --example with-supabase with-supabase-app
-   ```
+We had a hard time integrating the tools into our AI, such that it could use them, and having an AI that could stream information and display it streaming. We also had a hard time integrating reasoning to the frontend, and overall, creating an AI that could respond back without bugs.
 
-   ```bash
-   yarn create next-app --example with-supabase with-supabase-app
-   ```
+Leaflet JS was also a little challenging to use since the map components tend to load very slowly for more data points you want to visualize. 
 
-   ```bash
-   pnpm create next-app --example with-supabase with-supabase-app
-   ```
+Another one of the challenges we found was finding the wait times at hospitals. There is no consistent standard around this and many times the data is not available online to view. While there do exist a few APIs, they are restricted to certain provider networks and require partnership with the provider network. To solve this problem, we rely on government data and user reported activity.
 
-3. Use `cd` to change into the app's directory
+## Accomplishments that we're proud of
+We are very proud of learning a lot more about Agentic AI and writing good system prompts that result in great tool-calling and really helpful assistants.
 
-   ```bash
-   cd with-supabase-app
-   ```
+## What we learned
+We learned more about Agentic AI, rapid prototyping, and best practices in software development. We also learned how to best prompt LLMs to call relevant tools and work with various APIs.
 
-4. Rename `.env.example` to `.env.local` and update the following:
+## What's next for Careflow
+We plan to integrate several other tools to make it easier for patients to find healthcare providers. We hope in the future to allow users to directly book appointments on Careflow and show PCP availability, something especially important for rural areas with limited availability.
 
-   ```
-   NEXT_PUBLIC_SUPABASE_URL=[INSERT SUPABASE PROJECT URL]
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=[INSERT SUPABASE PROJECT API ANON KEY]
-   ```
+Additionally, we would like to integrate Careflow to more existing tools. For example, while we use the OpenStreetMap API to search for nearby hospitals, we can expand it to include pharmacies and other medical facilities with OpenStreetMap’s ArcGIS Feature Layer for medical facilities in North America.
 
-   Both `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` can be found in [your Supabase project's API settings](https://supabase.com/dashboard/project/_?showConnect=true)
+We also want to expand how the wait times at hospitals are determined, either by having hospitals directly report to our system or improving web scraping capabilities to pull more information off of hospital websites. We can also set up agent callers to determine waiting times at hospitals for when the information is not available online.
 
-5. You can now run the Next.js local development server:
-
-   ```bash
-   npm run dev
-   ```
-
-   The starter kit should now be running on [localhost:3000](http://localhost:3000/).
-
-6. This template comes with the default shadcn/ui style initialized. If you instead want other ui.shadcn styles, delete `components.json` and [re-install shadcn/ui](https://ui.shadcn.com/docs/installation/next)
-
-> Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
-
-## Feedback and issues
-
-Please file feedback and issues over on the [Supabase GitHub org](https://github.com/supabase/supabase/issues/new/choose).
-
-## More Supabase examples
-
-- [Next.js Subscription Payments Starter](https://github.com/vercel/nextjs-subscription-payments)
-- [Cookie-based Auth and the Next.js 13 App Router (free course)](https://youtube.com/playlist?list=PL5S4mPUpp4OtMhpnp93EFSo42iQ40XjbF)
-- [Supabase Auth and the Next.js App Router](https://github.com/supabase/supabase/tree/master/examples/auth/nextjs)
+Lastly, we would like to integrate Careflow with insurance providers to provide accurate estimates of cost and find the best hospital so patients can get the care they need without worrying if they will be able to afford it.
