@@ -8,7 +8,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Users, TrendingUp, Activity } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
 
 interface RequestHeatmapProps {
   state?: string;
@@ -42,7 +41,7 @@ export default function RequestHeatmap({
   const [isMapReady, setIsMapReady] = useState(false);
   
   // Fetch heatmap data
-  const { data: heatmapData, isLoading, refetch } = trpc.requests.getRequestHeatmap.useQuery({
+  const { data: heatmapData, isLoading } = trpc.requests.getRequestHeatmap.useQuery({
     state,
     city,
     daysBack: selectedTimeRange,
@@ -52,10 +51,10 @@ export default function RequestHeatmap({
   useEffect(() => {
     if (!mapContainer.current || mapInstance.current) return;
     
-    console.log('Initializing map...');
+    // Initializing map...
     
     // Default center (Maryland center since we have MD data)
-    let defaultCenter: [number, number] = [39.0458, -76.6413]; // Maryland center
+    const defaultCenter: [number, number] = [39.0458, -76.6413]; // Maryland center
     let defaultZoom = 8;
     
     if (city) {
@@ -73,7 +72,7 @@ export default function RequestHeatmap({
     });
     
     tileLayer.on('load', () => {
-      console.log('Map tiles loaded, map is ready');
+      // Map tiles loaded, map is ready
       setIsMapReady(true);
     });
     
@@ -89,7 +88,7 @@ export default function RequestHeatmap({
     // Also set ready after a timeout as fallback
     setTimeout(() => {
       setIsMapReady(true);
-      console.log('Map ready (timeout fallback)');
+      // Map ready (timeout fallback)
     }, 500);
     
     return () => {
@@ -99,38 +98,34 @@ export default function RequestHeatmap({
         setIsMapReady(false);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty dependency array - only run once on mount
   
   // Update circles when map is ready and data changes
   useEffect(() => {
     if (!isMapReady) {
-      console.log('Map not ready yet, waiting...');
+      // Map not ready yet, waiting...
       return;
     }
     
     if (!mapInstance.current) {
-      console.log('Map instance not available');
+      console.warn('Map instance not available');
       return;
     }
     
     if (!heatmapData || heatmapData.length === 0) {
-      console.log('No data to display');
+      // No data to display
       return;
     }
     
-    console.log('✅ Map is ready! Rendering circles:', {
-      mapReady: isMapReady,
-      mapInstance: !!mapInstance.current,
-      dataPoints: heatmapData.length,
-      firstPoint: heatmapData[0]
-    });
+    // Map is ready! Rendering circles
     
     // Remove existing circles layer
     if (circlesLayerRef.current) {
       try {
         mapInstance.current.removeLayer(circlesLayerRef.current);
-      } catch (e) {
-        console.log('Layer already removed');
+      } catch {
+        // Layer already removed
       }
       circlesLayerRef.current = null;
     }
@@ -150,9 +145,9 @@ export default function RequestHeatmap({
       });
       testCircle.bindPopup('<strong>TEST CIRCLE</strong><br/>Baltimore - Visible = Map Working');
       testCircle.addTo(circlesLayerRef.current);
-      console.log('🔴 Test circle added successfully at Baltimore');
+      // Test circle added successfully at Baltimore
     } catch (error) {
-      console.error('Failed to add test circle:', error);
+      console.warn('Failed to add test circle:', error);
     }
     
     // Filter data by care type if needed
@@ -161,12 +156,11 @@ export default function RequestHeatmap({
       filteredData = heatmapData.filter(d => d.typeOfCare === selectedCareType);
     }
     
-    console.log('Creating demand visualization with', filteredData.length, 'locations');
-    console.log('Sample data points:', filteredData.slice(0, 3));
+    // Creating demand visualization with filteredData.length locations
     
     // Find max intensity for scaling
     const maxIntensity = Math.max(...filteredData.map(d => d.intensity), 1);
-    console.log('Max intensity:', maxIntensity);
+    // Max intensity: maxIntensity
     
     // Create circles for each data point
     filteredData.forEach((point, index) => {
@@ -180,14 +174,7 @@ export default function RequestHeatmap({
       const opacity = 0.4 + (point.intensity / maxIntensity) * 0.5;
       
       if (index < 3) {
-        console.log(`Circle ${index}:`, {
-          lat: point.lat,
-          lng: point.lng,
-          radius: radius,
-          color: baseColor,
-          opacity: opacity,
-          intensity: point.intensity
-        });
+        // Circle details for debugging
       }
       
       // Create circle with error handling
@@ -211,16 +198,18 @@ export default function RequestHeatmap({
         `);
         
         // Add hover effect
-        circle.on('mouseover', function() {
-          this.setStyle({
+        circle.on('mouseover', (e) => {
+          const targetCircle = e.target as L.Circle;
+          targetCircle.setStyle({
             weight: 4,
             opacity: 1,
             fillOpacity: Math.min(opacity + 0.2, 1)
           });
         });
         
-        circle.on('mouseout', function() {
-          this.setStyle({
+        circle.on('mouseout', (e) => {
+          const targetCircle = e.target as L.Circle;
+          targetCircle.setStyle({
             weight: 3,
             opacity: Math.min(opacity + 0.3, 1),
             fillOpacity: opacity
@@ -243,12 +232,12 @@ export default function RequestHeatmap({
         if (mapInstance.current && circlesLayerRef.current) {
           try {
             circlesLayerRef.current.addTo(mapInstance.current);
-            console.log('Layer group added to map with', filteredData.length, 'circles');
+            // Layer group added to map with filteredData.length circles
             
             // Fit bounds to show all points
             const bounds = L.latLngBounds(filteredData.map(p => [p.lat, p.lng]));
             mapInstance.current.fitBounds(bounds, { padding: [50, 50] });
-            console.log('Map bounds fitted');
+            // Map bounds fitted
             
             // Force a map redraw
             mapInstance.current.invalidateSize();
@@ -258,7 +247,7 @@ export default function RequestHeatmap({
         }
       }, 100);
     } else {
-      console.log('No circles to add to map');
+      // No circles to add to map
     }
   }, [heatmapData, selectedCareType, isMapReady]); // Include isMapReady in dependencies
   

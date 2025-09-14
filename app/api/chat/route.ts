@@ -63,7 +63,7 @@ const tools = {
       lng: z.number().optional().describe('User longitude for distance calculation'),
       radius: z.number().optional().default(25).describe('Search radius in miles'),
     }),
-    execute: async ({ city, state, typeOfCare, lat, lng, radius }) => {
+    execute: async ({ city, state, typeOfCare, lat, lng }) => {
       const supabase = await createClient();
       
       let query = supabase
@@ -116,7 +116,7 @@ const tools = {
         );
         
         // Sort by total time
-        results = hospitalsWithDistance.sort((a: any, b: any) => {
+        results = hospitalsWithDistance.sort((a, b) => {
           const aTime = a.total_time_minutes || 999;
           const bTime = b.total_time_minutes || 999;
           return aTime - bTime;
@@ -173,7 +173,7 @@ const tools = {
         mode: z.enum(['driving', 'walking', 'cycling']).optional().default('driving'),
       })
       .describe('Provide either all of fromLat/fromLng/toLat/toLng or fromText/toText'),
-    execute: async (input: any) => {
+    execute: async (input) => {
       try {
         const profile: 'driving' | 'walking' | 'cycling' = input.mode || 'driving';
         let from: { lat: number; lng: number } | string | undefined;
@@ -235,10 +235,10 @@ const tools = {
 
       const newScore = (hospital.wait_score || 0) + increment;
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('hospitals')
         .update({ 
-          wait_score: newScore,
+          wait_score: newScore ,
           updated_at: new Date().toISOString(),
         })
         .eq('id', hospitalId)
@@ -297,35 +297,80 @@ const tools = {
           };
         }
         
-        // Log the request via tRPC (server-side)
-        const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/trpc/requests.logLocationRequest`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            json: {
-              reason,
-              typeOfCare,
-              address,
-              city,
-              state,
-              zipCode,
-            },
-          }),
-          credentials: 'include',
-        });
+        // Build address string for geocoding
+        const addressParts = [];
+        if (address) addressParts.push(address);
+        if (city) addressParts.push(city);
+        if (state) addressParts.push(state);
+        if (zipCode) addressParts.push(zipCode);
+        const fullAddress = addressParts.join(', ');
         
-        if (!response.ok) {
-          throw new Error('Failed to log request');
+        let latitude = null;
+        let longitude = null;
+        
+        // Try to geocode the address
+        if (fullAddress) {
+          try {
+            const geocodeResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/geocode`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ 
+                address: fullAddress,
+                includeDetails: true 
+              }),
+            });
+            
+            if (geocodeResponse.ok) {
+              const geocodeData = await geocodeResponse.json();
+              if (geocodeData.success && geocodeData.location) {
+                latitude = geocodeData.location.lat;
+                longitude = geocodeData.location.lng;
+                
+                // Use geocoded data to fill in missing fields
+                if (!city && geocodeData.details?.city) {
+                  city = geocodeData.details.city;
+                }
+                if (!state && geocodeData.details?.state) {
+                  state = geocodeData.details.state;
+                }
+                if (!zipCode && geocodeData.details?.zipCode) {
+                  zipCode = geocodeData.details.zipCode;
+                }
+              }
+            }
+          } catch (geocodeError) {
+            console.warn('Geocoding failed, continuing without coordinates:', geocodeError);
+          }
         }
         
-        const result = await response.json();
+        // Insert directly into the database
+        const { data, error } = await supabase
+          .from('requests')
+          .insert({
+            user_id: user.id,
+            reason,
+            type_of_care: typeOfCare,
+            address,
+            city,
+            state,
+            zipcode: zipCode,
+            latitude,
+            longitude,
+          })
+          .select('request_id')
+          .single();
+        
+        if (error) {
+          console.error('Database error logging request:', error);
+          throw error;
+        }
         
         return {
           success: true,
           message: 'Location request logged successfully',
-          requestId: result.result?.data?.request_id,
+          requestId: data?.request_id,
         };
       } catch (error) {
         console.error('Error logging patient request:', error);
@@ -414,7 +459,7 @@ const tools = {
         });
         
         // Sort by distance - hospitals without locations go to the end
-        results = results.sort((a: any, b: any) => {
+        results = results.sort((a, b) => {
           const aDist = a.distance_miles !== undefined ? a.distance_miles : 999;
           const bDist = b.distance_miles !== undefined ? b.distance_miles : 999;
           return aDist - bDist;
@@ -452,7 +497,7 @@ const tools = {
           searchQuery = `pop-up clinic mobile health clinic community health event free clinic ${location} ${userNeeds || ''}`;
         }
         
-        console.log('Exa search query:', searchQuery);
+        // Exa search query: searchQuery
         
         // Perform Exa search for 5 results
         const searchResults = await exa.searchAndContents(searchQuery, {
@@ -460,8 +505,8 @@ const tools = {
           useAutoprompt: true,
         });
         
-        console.log(`Found ${searchResults.results.length} results from Exa`);
-        console.log('Exa search results:', searchResults.results);
+        // Found searchResults.results.length results from Exa
+        // Exa search results: searchResults.results
         
         // Define the hospital schema for generateObject
         const hospitalSchema = z.object({
@@ -521,7 +566,7 @@ const tools = {
           }
         }
         
-        console.log(`Successfully processed ${processedProviders.length} providers`);
+        // Successfully processed processedProviders.length providers
         
         // Update database with new providers
         // Use service role client to bypass RLS for system inserts
@@ -578,7 +623,7 @@ const tools = {
           }
         }
         
-        console.log(`Added/updated ${insertedProviders.length} providers in database`);
+        // Added/updated insertedProviders.length providers in database
         
         return {
           searchQuery,
@@ -668,8 +713,8 @@ When users are looking for TELEHEALTH or POP-UP CLINICS:
    - Type of care needed (telehealth or pop-up clinic)
    - Any specific user needs or symptoms
 
-6. Always call searchEstablishedFacilities after you have responded to the users original request to get established hospitals and clinics in the area once you have the users location
-
+6. Always call searchEstablishedFacilities AFTER searchHospitalsInDBafter and AFTER you have responded to the users original request to get established hospitals and clinics in the area once you have the users location
+7. You must use searchHospitalsInDB to get hospitals and clinics in the area once you have the users location. If one type of care is not found, you should try the other type of care. ALWAYS INCLUDE ER
 CONVERSATION FLOW:
 1. Greet warmly and check for emergencies
 2. Ask about symptoms and their severity
@@ -708,7 +753,7 @@ TOOL USAGE NOTES:
 - Use client-side tools (getUserLocation, confirmSelection, showHospitalsOnMap) only when user interaction/visualization is needed.`;
 
 export async function POST(request: Request) {
-  const { messages, chatId }: { messages: UIMessage[]; chatId: string } = await request.json();
+  const { messages }: { messages: UIMessage[]; chatId?: string } = await request.json();
 
   const result = streamText({
     model: gateway('google/gemini-2.5-flash'),

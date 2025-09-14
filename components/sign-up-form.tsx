@@ -18,8 +18,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-interface SignUpFormProps extends React.ComponentPropsWithoutRef<"div"> {
-}
+type SignUpFormProps = React.ComponentPropsWithoutRef<"div">;
 
 export function SignUpForm({
   className,
