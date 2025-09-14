@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
@@ -142,10 +141,7 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-      if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
-      }
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
   }, [messages]);
 
@@ -219,16 +215,18 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
   return (
     <div className="flex flex-col h-full">
       {/* Emergency Alert */}
-      <Alert className="flex-shrink-0 mb-4 border-red-200 bg-red-50 dark:bg-red-950/20">
-        <AlertCircle className="h-4 w-4 text-red-600" />
-        <AlertDescription className="text-red-800 dark:text-red-200">
-          <strong>If this is a medical emergency, call 911 immediately.</strong>
-        </AlertDescription>
-      </Alert>
+      <div className="px-4 pt-4">
+        <Alert className="flex-shrink-0 mb-4 border-red-200 bg-red-50 dark:bg-red-950/20 max-w-5xl mx-auto">
+          <AlertCircle className="h-4 w-4 text-red-600" />
+          <AlertDescription className="text-red-800 dark:text-red-200">
+            <strong>If this is a medical emergency, call 911 immediately.</strong>
+          </AlertDescription>
+        </Alert>
+      </div>
 
       {/* Messages Area - Takes remaining space */}
-      <ScrollArea ref={scrollAreaRef} className="flex-1 overflow-y-auto">
-        <div className="space-y-4 pb-4 pr-4">
+      <div className="flex-1 overflow-y-auto px-4" ref={scrollAreaRef}>
+        <div className="space-y-4 pb-4 max-w-5xl mx-auto">
           {messages.map((message) => (
             <div key={message.id} className="space-y-2">
               <div className={cn(
@@ -576,25 +574,27 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
             </div>
           )}
         </div>
-      </ScrollArea>
+      </div>
 
       {/* Input Area */}
-      <form onSubmit={handleSendMessage} className="flex-shrink-0 mt-4 flex gap-2">
-        <Input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Describe your symptoms or ask for help..."
-          disabled={(status as any) === 'in_progress'}
-          className="flex-1"
-        />
-        <Button type="submit" disabled={(status as any) === 'in_progress' || !input.trim()}>
-          {(status as any) === 'in_progress' ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Send className="h-4 w-4" />
-          )}
-        </Button>
-      </form>
+      <div className="flex-shrink-0 border-t p-4">
+        <form onSubmit={handleSendMessage} className="flex gap-2 max-w-5xl mx-auto">
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Describe your symptoms or ask for help..."
+            disabled={(status as any) === 'in_progress'}
+            className="flex-1"
+          />
+          <Button type="submit" disabled={(status as any) === 'in_progress' || !input.trim()}>
+            {(status as any) === 'in_progress' ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+          </Button>
+        </form>
+      </div>
     </div>
   );
 }
