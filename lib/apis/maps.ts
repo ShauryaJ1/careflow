@@ -63,6 +63,10 @@ async function geocodeIfNeeded(loc: LocationInput): Promise<Coordinates> {
     if (!GEOAPIFY_API_KEY) throw new Error('GEOAPIFY_API_KEY is required to geocode a string location');
     const url = new URL('https://api.geoapify.com/v1/geocode/search');
     url.searchParams.set('text', parsed);
+    // If looks like a US ZIP code, constrain to US for better accuracy
+    if (/^\d{5}$/.test(parsed)) {
+      url.searchParams.set('filter', 'countrycode:us');
+    }
     url.searchParams.set('limit', '1');
     url.searchParams.set('apiKey', GEOAPIFY_API_KEY);
     const res = await fetch(url.toString());
@@ -74,6 +78,82 @@ async function geocodeIfNeeded(loc: LocationInput): Promise<Coordinates> {
     return { lng: Number(coords[0]), lat: Number(coords[1]) };
   }
   return parsed;
+}
+
+// Convert various location-like inputs into normalized lat/lng coordinates.
+// Accepts:
+// - Coordinates object: { lat, lng }
+// - Alt-key objects: { lat, lon } or { latitude, longitude }
+// - Tuple-like array: [lat, lng] or [lng, lat] (auto-detects by range)
+// - String:
+//     - "lat,lng" or "lng,lat" (auto-detects by range)
+//     - Any free-form address or ZIP (geocoded via Geoapify)
+export async function to_lat_lng(
+  input:
+    | Coordinates
+    | { lat: number; lon: number }
+    | { latitude: number; longitude: number }
+    | [number, number]
+    | string
+): Promise<Coordinates> {
+  // 1) Direct coordinates object
+  // { lat, lng }
+  if (typeof input === 'object' && input != null && 'lat' in input && 'lng' in input) {
+    const coords = { lat: Number((input as any).lat), lng: Number((input as any).lng) };
+    return coordinatesSchema.parse(coords);
+  }
+
+  // 2) Alt key variants
+  // { lat, lon }
+  if (typeof input === 'object' && input != null && 'lat' in input && 'lon' in input) {
+    const coords = { lat: Number((input as any).lat), lng: Number((input as any).lon) };
+    return coordinatesSchema.parse(coords);
+  }
+  // { latitude, longitude }
+  if (typeof input === 'object' && input != null && 'latitude' in input && 'longitude' in input) {
+    const coords = { lat: Number((input as any).latitude), lng: Number((input as any).longitude) };
+    return coordinatesSchema.parse(coords);
+  }
+
+  // 3) Tuple-like arrays: [a, b]
+  if (Array.isArray(input) && input.length === 2) {
+    const a = Number(input[0]);
+    const b = Number(input[1]);
+    // Try as [lat, lng]
+    const asLatLng = { lat: a, lng: b };
+    const asLngLat = { lat: b, lng: a };
+    const withinLat = (x: number) => x >= -90 && x <= 90;
+    const withinLng = (x: number) => x >= -180 && x <= 180;
+    if (withinLat(asLatLng.lat) && withinLng(asLatLng.lng)) return coordinatesSchema.parse(asLatLng);
+    if (withinLat(asLngLat.lat) && withinLng(asLngLat.lng)) return coordinatesSchema.parse(asLngLat);
+    // Fall back to strict schema (will throw)
+    return coordinatesSchema.parse(asLatLng);
+  }
+
+  // 4) Strings: parse "lat,lng" quickly; otherwise geocode
+  if (typeof input === 'string') {
+    const trimmed = input.trim();
+    // Quick numeric pair: "a,b"
+    const m = trimmed.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/);
+    if (m) {
+      const a = Number(m[1]);
+      const b = Number(m[2]);
+      const asLatLng = { lat: a, lng: b };
+      const asLngLat = { lat: b, lng: a };
+      const withinLat = (x: number) => x >= -90 && x <= 90;
+      const withinLng = (x: number) => x >= -180 && x <= 180;
+      if (withinLat(asLatLng.lat) && withinLng(asLatLng.lng)) return coordinatesSchema.parse(asLatLng);
+      if (withinLat(asLngLat.lat) && withinLng(asLngLat.lng)) return coordinatesSchema.parse(asLngLat);
+      // If neither orientation is within range, let schema throw
+      return coordinatesSchema.parse(asLatLng);
+    }
+
+    // Otherwise, treat as address/ZIP and geocode via existing helper
+    return geocodeIfNeeded(trimmed);
+  }
+
+  // Unsupported input
+  throw new Error('Unsupported location input format');
 }
 
 export async function how_far(args: {
