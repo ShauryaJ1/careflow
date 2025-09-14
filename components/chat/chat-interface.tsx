@@ -10,7 +10,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import ReactMarkdown from 'react-markdown';
 import { 
   Send, 
   MapPin, 
@@ -255,17 +254,7 @@ export default function ChatInterface({ chatId, initialMessages = [] }: ChatInte
                               : 'bg-muted'
                           )}>
                             <CardContent className="p-3">
-                              {message.role === 'user' ? (
-                                <p className="text-sm whitespace-pre-wrap">{part.text || part.content || ''}</p>
-                              ) : (
-                                <div className="text-sm space-y-4">
-                                  {(part.text || part.content || '').split('\n').filter((line: string) => line.trim()).map((paragraph: string, index: number) => (
-                                    <div key={index} className="prose prose-sm max-w-none dark:prose-invert">
-                                      <ReactMarkdown>{paragraph}</ReactMarkdown>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
+                              <p className="text-sm whitespace-pre-wrap">{part.text || part.content || ''}</p>
                             </CardContent>
                           </Card>
                         );
