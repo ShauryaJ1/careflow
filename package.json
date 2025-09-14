@@ -57,7 +57,7 @@
     "superjson": "^2.2.2",
     "tailwind-merge": "^3.3.0",
     "tsx": "^4.20.5",
-    "zod": "^4.1.8"
+    "zod": "^4.0.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
